@@ -1,5 +1,6 @@
 from pydantic import computed_field
 from sqlmodel import SQLModel
+from datetime import datetime
 
 from .generic import BaseTableModel
 
@@ -25,7 +26,14 @@ class UserCreate(UserBase):
 
 
 class UserRead(UserBase):
-    pass
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: datetime | None
+
+    @computed_field
+    def is_active(self) -> bool:
+        return self.deleted_at is None
 
 
 class UserUpdate(SQLModel):
