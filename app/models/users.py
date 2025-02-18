@@ -1,8 +1,11 @@
-from pydantic import computed_field
+from pydantic import computed_field, Field, EmailStr
 from sqlmodel import SQLModel
 from datetime import datetime
 
 from .generic import BaseTableModel
+
+
+USERNAME_MAX_LENGTH = 12
 
 
 class UserBase(SQLModel):
@@ -22,6 +25,8 @@ class User(BaseTableModel, UserBase, table=True):
 
 
 class UserCreate(UserBase):
+    username: str = Field(max_length=USERNAME_MAX_LENGTH)
+    email: EmailStr
     password: str
 
 
@@ -37,8 +42,8 @@ class UserRead(UserBase):
 
 
 class UserUpdate(SQLModel):
-    username: str | None = None
-    email: str | None = None
+    username: str | None = Field(max_length=USERNAME_MAX_LENGTH, default=None)
+    email: EmailStr | None = None
     first_name: str | None = None
     last_name: str | None = None
     is_admin: bool = False

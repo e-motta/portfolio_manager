@@ -1,10 +1,10 @@
 from collections.abc import Generator
 from fastapi import Depends, HTTPException, status
-from sqlmodel import Session, select, SQLModel
+from sqlmodel import Session, select
 from typing import Annotated
 
 from ..core.db import engine
-from ..models.users import User, UserCreate
+from ..models.users import User, UserBase
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -15,7 +15,7 @@ def get_db() -> Generator[Session, None, None]:
 SessionDep = Annotated[Session, Depends(get_db)]
 
 
-def validate_unique_username(session: SessionDep, user_in: UserCreate):
+def validate_unique_username(session: SessionDep, user_in: UserBase):
     statement = select(User).where(User.username == user_in.username)
     users = session.exec(statement).first()
     if users:
@@ -26,7 +26,7 @@ def validate_unique_username(session: SessionDep, user_in: UserCreate):
         )
 
 
-def validate_unique_email(session: SessionDep, user_in: UserCreate):
+def validate_unique_email(session: SessionDep, user_in: UserBase):
     statement = select(User).where(User.email == user_in.email)
     users = session.exec(statement).first()
     if users:
