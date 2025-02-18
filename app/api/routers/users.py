@@ -89,3 +89,6 @@ def delete_user(session: SessionDep, id: int, hard_delete: bool = False):
         session.commit()
 
     return {"ok": True}
+
+
+# todo: recover soft deletion
