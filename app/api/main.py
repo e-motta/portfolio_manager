@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
+
 from ..core.db import run_migrations
+from ..core.config import settings
 from .routers import users
 
 
@@ -12,4 +14,4 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(users.router)
+app.include_router(users.router, prefix=settings.API_V1_STR)

@@ -1,15 +1,19 @@
 from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import select
 from sqlalchemy import func
 
 from ...models.users import User, UserRead, UserCreate, UserUpdate
 from ..dependencies import SessionDep, validate_unique_email, validate_unique_username
+from ...core.config import settings
 
 
-router = APIRouter()
+router = APIRouter(prefix="/users")
+
+oauth2 = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth")
 
 
-@router.get("/users/", tags=["users"], response_model=list[UserRead])
+@router.get("/", tags=["users"], response_model=list[UserRead])
 def read_users(
     session: SessionDep, username: str | None = None, include_deleted: bool = False
 ):
@@ -25,12 +29,12 @@ def read_users(
     return users
 
 
-# @router.get("/users/me", tags=["users"])
+# @router.get("/me", tags=["users"])
 # def read_user_me() -> UserRead:
 #     return UserRead(**fake_users[0])
 
 
-@router.get("/users/{id}", tags=["users"], response_model=UserRead)
+@router.get("/{id}", tags=["users"], response_model=UserRead)
 def read_user(session: SessionDep, id: int):
     user = session.get(User, id)
     if not user:
@@ -41,7 +45,7 @@ def read_user(session: SessionDep, id: int):
 
 
 @router.post(
-    "/users/",
+    "/",
     tags=["users"],
     response_model=UserRead,
     dependencies=[Depends(validate_unique_email), Depends(validate_unique_username)],
@@ -55,7 +59,7 @@ def create_user(session: SessionDep, user_in: UserCreate):
     return db_obj
 
 
-@router.post("/users/{id}", tags=["users"], response_model=UserRead)
+@router.post("/{id}", tags=["users"], response_model=UserRead)
 def udpate_user(session: SessionDep, id: int, user_in: UserUpdate):
     user_db = session.get(User, id)
     if not user_db:
@@ -70,7 +74,7 @@ def udpate_user(session: SessionDep, id: int, user_in: UserUpdate):
     return user_db
 
 
-@router.delete("/users/{id}", tags=["users"])
+@router.delete("/{id}", tags=["users"])
 def delete_user(session: SessionDep, id: int, hard_delete: bool = False):
     print("hard_delete", hard_delete)
     user_db = session.get(User, id)

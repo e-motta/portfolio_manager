@@ -3,9 +3,7 @@ from sqlmodel import SQLModel
 from datetime import datetime
 
 from .generic import BaseTableModel
-
-
-USERNAME_MAX_LENGTH = 12
+from ..core.config import settings
 
 
 class UserBase(SQLModel):
@@ -25,7 +23,7 @@ class User(BaseTableModel, UserBase, table=True):
 
 
 class UserCreate(UserBase):
-    username: str = Field(max_length=USERNAME_MAX_LENGTH)
+    username: str = Field(max_length=settings.USERNAME_MAX_LENGTH)
     email: EmailStr
     password: str
 
@@ -42,7 +40,7 @@ class UserRead(UserBase):
 
 
 class UserUpdate(SQLModel):
-    username: str | None = Field(max_length=USERNAME_MAX_LENGTH, default=None)
+    username: str | None = Field(max_length=settings.USERNAME_MAX_LENGTH, default=None)
     email: EmailStr | None = None
     first_name: str | None = None
     last_name: str | None = None
