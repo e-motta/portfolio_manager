@@ -118,4 +118,23 @@ def delete_user(
     return {"ok": True}
 
 
-# todo: recover soft deletion
+@router.post(
+    "/{id}/recover", tags=["users"], dependencies=[IsAdminDep], response_model=UserRead
+)
+def recover_soft_deletion(session: SessionDepAnnotated, id: int):
+    user_db = session.get(User, id)
+
+    if not user_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    if user_db.deleted_at is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User is already active"
+        )
+
+    user_db.deleted_at = None
+    session.add(user_db)
+    session.commit()
+
+    return user_db
