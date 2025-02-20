@@ -1,7 +1,7 @@
 from sqlmodel import create_engine
+
 from alembic import command
 from alembic.config import Config
-
 
 engine = create_engine("sqlite:///./local.db")
 

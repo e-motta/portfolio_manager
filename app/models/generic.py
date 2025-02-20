@@ -1,6 +1,7 @@
-from sqlalchemy import func, DateTime
-from sqlmodel import SQLModel, Field, Column
 from datetime import datetime
+
+from sqlalchemy import DateTime, func
+from sqlmodel import Column, Field, SQLModel
 
 
 class BaseTableModel(SQLModel):

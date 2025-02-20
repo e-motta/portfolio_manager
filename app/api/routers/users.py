@@ -1,19 +1,18 @@
-from fastapi import APIRouter, HTTPException, status, Depends
-from sqlmodel import select
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
+from sqlmodel import select
 
-from ...models.users import User, UserRead, UserCreate, UserUpdate
+from ...models.users import User, UserCreate, UserRead, UserUpdate
 from ..dependencies import (
+    CurrentUserDepAnnotated,
     IsAdminDep,
+    SessionDepAnnotated,
     TokenDep,
     oauth2_scheme,
-    CurrentUserDepAnnotated,
-    SessionDepAnnotated,
     validate_unique_email,
     validate_unique_username,
 )
 from ..utils import get_password_hash
-
 
 router = APIRouter(prefix="/users")
 

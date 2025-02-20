@@ -1,9 +1,10 @@
-from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
-from ..core.db import run_migrations
+from fastapi import FastAPI
+
 from ..core.config import settings
-from .routers import users, auth
+from ..core.db import run_migrations
+from .routers import auth, users
 
 
 @asynccontextmanager

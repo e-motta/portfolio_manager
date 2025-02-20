@@ -1,16 +1,16 @@
 from collections.abc import Generator
+from typing import Annotated
+
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlmodel import Session, select
-from typing import Annotated
-import jwt
 from jwt.exceptions import InvalidTokenError
+from sqlmodel import Session, select
 
-from .utils import verify_password
+from ..core.config import settings
 from ..core.db import engine
-from ..core.config import settings
-from ..core.config import settings
-from ..models import User, UserBase, TokenData
+from ..models import TokenData, User, UserBase
+from .utils import verify_password
 
 
 def get_db() -> Generator[Session, None, None]:

@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, status
 from datetime import timedelta
 
+from fastapi import APIRouter, HTTPException, status
+
+from ...core.config import settings
+from ...models import Token
 from ..dependencies import AuthenticateUserDepAnnotated
 from ..utils import create_access_token
-from ...models import Token
-from ...core.config import settings
-
 
 router = APIRouter(prefix="/auth")
 

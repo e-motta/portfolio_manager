@@ -1,9 +1,10 @@
-from pydantic import computed_field, Field, EmailStr
-from sqlmodel import SQLModel
 from datetime import datetime
 
-from .generic import BaseTableModel
+from pydantic import EmailStr, Field, computed_field
+from sqlmodel import SQLModel
+
 from ..core.config import settings
+from .generic import BaseTableModel
 
 
 class UserBase(SQLModel):
