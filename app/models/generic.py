@@ -1,19 +1,23 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, func
-from sqlmodel import Column, Field, SQLModel
+from sqlalchemy import event
+from sqlalchemy.orm import Session
+from sqlmodel import Field, SQLModel
 
 
 class BaseTableModel(SQLModel):
     id: int = Field(default=None, primary_key=True)
-    created_at: datetime | None = Field(
-        default=None,
-        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
     )
-    updated_at: datetime | None = Field(
-        default=None,
-        sa_column=Column(
-            DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-        ),
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), nullable=False
     )
     deleted_at: datetime | None = None
+
+
+@event.listens_for(Session, "before_flush")
+def auto_update_timestamp(session, flush_context, instances):
+    for obj in session.dirty:
+        if isinstance(obj, BaseTableModel):
+            obj.updated_at = datetime.now(timezone.utc)
