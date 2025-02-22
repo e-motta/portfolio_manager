@@ -8,7 +8,6 @@ from ..dependencies import (
     IsAdminDep,
     SessionDepAnnotated,
     TokenDep,
-    oauth2_scheme,
     validate_unique_email,
     validate_unique_username,
 )

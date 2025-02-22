@@ -1,9 +1,10 @@
 from datetime import datetime
 
 from pydantic import EmailStr, Field, computed_field
-from sqlmodel import SQLModel
+from sqlmodel import Relationship, SQLModel
 
 from ..core.config import settings
+from .accounts import Account
 from .generic import BaseTableModel
 
 
@@ -21,6 +22,7 @@ class UserBase(SQLModel):
 
 class User(BaseTableModel, UserBase, table=True):
     password_hash: str
+    accounts: list[Account] = Relationship(back_populates="accounts")
 
 
 class UserCreate(UserBase):
@@ -34,6 +36,7 @@ class UserRead(UserBase):
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None
+    accounts: list[Account]
 
     @computed_field
     def is_active(self) -> bool:
