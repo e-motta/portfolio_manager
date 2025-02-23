@@ -14,8 +14,11 @@ class AccountBase(SQLModel):
 
 
 class Account(BaseTableModel, AccountBase, table=True):
+    __tablename__: str = "accounts"
+
     user_id: int = Field(foreign_key="users.id")
-    stocks: list[Stock] = Relationship(back_populates="stocks")
+    user: "User" = Relationship(back_populates="accounts")  # type: ignore
+    stocks: list[Stock] = Relationship(back_populates="account")
 
 
 class AccountCreate(AccountBase):

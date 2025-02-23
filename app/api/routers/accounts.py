@@ -1,21 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func
+from fastapi import APIRouter
 from sqlmodel import select
 
 from ...models import Account, AccountCreate, AccountRead, AccountUpdate
-from ..dependencies import (
-    CurrentUserDepAnnotated,
-    IsAdminDep,
-    SessionDepAnnotated,
-    TokenDep,
-    validate_unique_email,
-    validate_unique_username,
-)
+from ..dependencies import CurrentUserDepAnnotated, SessionDepAnnotated
 
 router = APIRouter(prefix="/accounts")
 
 
-@router.get("/", tags=["accounts"], response_model=AccountRead)
+@router.get("/", tags=["accounts"], response_model=list[AccountRead])
 def read_accounts(session: SessionDepAnnotated, current_user: CurrentUserDepAnnotated):
     statement = select(Account).where(Account.user_id == current_user.id)
     accounts = session.exec(statement).all()

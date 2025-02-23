@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import DECIMAL, Column
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 
 from .generic import BaseTableModel
 
@@ -17,7 +17,10 @@ class StockBase(SQLModel):
 
 
 class Stock(BaseTableModel, StockBase, table=True):
+    __tablename__: str = "stocks"
+
     account_id: int = Field(foreign_key="accounts.id")
+    account: list["Account"] = Relationship(back_populates="stocks")  # type: ignore
 
 
 class StockCreate(StockBase):
