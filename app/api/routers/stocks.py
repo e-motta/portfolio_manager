@@ -1,13 +1,13 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 
-from ...models import Stock, StockCreate, StockRead, StockUpdate, Account
+from ...models import Account, Stock, StockCreate, StockRead, StockUpdate
 from ..dependencies import CurrentUserDepAnnotated, SessionDepAnnotated
 
-router = APIRouter(prefix="/accounts/{account_id}/stocks")
+router = APIRouter(prefix="/accounts/{account_id}/stocks", tags=["stocks"])
 
 
-@router.get("/", tags=["stocks"], response_model=list[StockRead])
+@router.get("/", response_model=list[StockRead])
 def read_stocks(
     session: SessionDepAnnotated, current_user: CurrentUserDepAnnotated, account_id: int
 ):
@@ -23,7 +23,7 @@ def read_stocks(
     return stocks
 
 
-@router.post("/", tags=["stocks"], response_model=StockRead)
+@router.post("/", response_model=StockRead)
 def create_stock(
     session: SessionDepAnnotated,
     current_user: CurrentUserDepAnnotated,

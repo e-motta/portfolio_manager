@@ -4,17 +4,17 @@ from sqlmodel import select
 from ...models import Account, AccountCreate, AccountRead, AccountUpdate
 from ..dependencies import CurrentUserDepAnnotated, SessionDepAnnotated
 
-router = APIRouter(prefix="/accounts")
+router = APIRouter(prefix="/accounts", tags=["accounts"])
 
 
-@router.get("/", tags=["accounts"], response_model=list[AccountRead])
+@router.get("/", response_model=list[AccountRead])
 def read_accounts(session: SessionDepAnnotated, current_user: CurrentUserDepAnnotated):
     statement = select(Account).where(Account.user_id == current_user.id)
     accounts = session.exec(statement).all()
     return accounts
 
 
-@router.post("/", tags=["accounts"], response_model=AccountRead)
+@router.post("/", response_model=AccountRead)
 def create_account(
     session: SessionDepAnnotated,
     current_user: CurrentUserDepAnnotated,

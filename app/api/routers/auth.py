@@ -7,10 +7,10 @@ from ...models import Token
 from ..dependencies import AuthenticateUserDepAnnotated
 from ..utils import create_access_token
 
-router = APIRouter(prefix="/auth")
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/token", tags=["auth"])
+@router.post("/token")
 def login(user: AuthenticateUserDepAnnotated) -> Token:
     if not user:
         raise HTTPException(

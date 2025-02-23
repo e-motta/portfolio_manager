@@ -1,21 +1,10 @@
-from contextlib import asynccontextmanager
+from fastapi import APIRouter
 
-from fastapi import FastAPI
+from app.api.routers import accounts, auth, stocks, users
 
-from ..core.config import settings
-from ..core.db import run_migrations
-from .routers import accounts, auth, stocks, users
+api_router = APIRouter()
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    run_migrations()
-    yield
-
-
-app = FastAPI(lifespan=lifespan, debug=True)
-
-app.include_router(users.router, prefix=settings.API_V1_STR)
-app.include_router(auth.router, prefix=settings.API_V1_STR)
-app.include_router(accounts.router, prefix=settings.API_V1_STR)
-app.include_router(stocks.router, prefix=settings.API_V1_STR)
+api_router.include_router(users.router)
+api_router.include_router(auth.router)
+api_router.include_router(accounts.router)
+api_router.include_router(stocks.router)
