@@ -2,10 +2,10 @@ from datetime import timedelta
 
 from fastapi import APIRouter, HTTPException, status
 
-from ...core.config import settings
-from ...models import Token
-from ..dependencies import AuthenticateUserDepAnnotated
-from ..utils import create_access_token
+from app.api.dependencies import AuthenticateUserDepAnnotated
+from app.api.utils import create_access_token
+from app.core.config import settings
+from app.models import Token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

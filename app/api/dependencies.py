@@ -7,10 +7,10 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
 from sqlmodel import Session, select
 
-from ..core.config import settings
-from ..core.db import engine
-from ..models import TokenData, User, UserBase
-from .utils import verify_password
+from app.api.utils import verify_password
+from app.core.config import settings
+from app.core.db import engine
+from app.models import TokenData, User, UserBase
 
 
 def get_db() -> Generator[Session, None, None]:

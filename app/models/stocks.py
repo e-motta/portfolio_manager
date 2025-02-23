@@ -4,7 +4,7 @@ from decimal import Decimal
 from sqlalchemy import DECIMAL, Column
 from sqlmodel import Field, Relationship, SQLModel
 
-from .generic import BaseTableModel
+from app.models.generic import BaseTableModel
 
 
 class StockBase(SQLModel):

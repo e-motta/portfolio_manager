@@ -4,8 +4,8 @@ from decimal import Decimal
 from sqlalchemy import DECIMAL, Column
 from sqlmodel import Field, Relationship, SQLModel
 
-from .generic import BaseTableModel
-from .stocks import Stock
+from app.models.generic import BaseTableModel
+from app.models.stocks import Stock
 
 
 class AccountBase(SQLModel):

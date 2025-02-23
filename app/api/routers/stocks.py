@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 
-from ...models import Account, Stock, StockCreate, StockRead, StockUpdate
-from ..dependencies import CurrentUserDepAnnotated, SessionDepAnnotated
+from app.api.dependencies import CurrentUserDepAnnotated, SessionDepAnnotated
+from app.models import Account, Stock, StockCreate, StockRead, StockUpdate
 
 router = APIRouter(prefix="/accounts/{account_id}/stocks", tags=["stocks"])
 
