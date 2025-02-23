@@ -3,9 +3,9 @@ from datetime import datetime
 from pydantic import EmailStr, Field, computed_field
 from sqlmodel import Relationship, SQLModel
 
-from ..core.config import settings
-from .accounts import Account
-from .generic import BaseTableModel
+from app.core.config import settings
+from app.models.accounts import Account
+from app.models.generic import BaseTableModel
 
 
 class UserBase(SQLModel):

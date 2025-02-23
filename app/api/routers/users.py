@@ -2,8 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
 from sqlmodel import select
 
-from ...models.users import User, UserCreate, UserRead, UserUpdate
-from ..dependencies import (
+from app.api.dependencies import (
     CurrentUserDepAnnotated,
     IsAdminDep,
     SessionDepAnnotated,
@@ -11,14 +10,13 @@ from ..dependencies import (
     validate_unique_email,
     validate_unique_username,
 )
-from ..utils import get_password_hash
+from app.api.utils import get_password_hash
+from app.models.users import User, UserCreate, UserRead, UserUpdate
 
-router = APIRouter(prefix="/users")
+router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get(
-    "/", tags=["users"], response_model=list[UserRead], dependencies=[IsAdminDep]
-)
+@router.get("/", response_model=list[UserRead], dependencies=[IsAdminDep])
 def read_users(
     session: SessionDepAnnotated,
     username: str | None = None,
@@ -36,14 +34,13 @@ def read_users(
     return users
 
 
-@router.get("/me", tags=["users"], response_model=UserRead)
+@router.get("/me", response_model=UserRead)
 def read_user_me(current_user: CurrentUserDepAnnotated):
     return current_user
 
 
 @router.get(
     "/{id}",
-    tags=["users"],
     response_model=UserRead,
     dependencies=[TokenDep],
 )
@@ -58,7 +55,6 @@ def read_user(session: SessionDepAnnotated, id: int):
 
 @router.post(
     "/",
-    tags=["users"],
     response_model=UserRead,
     dependencies=[Depends(validate_unique_email), Depends(validate_unique_username)],
 )
@@ -72,7 +68,7 @@ def create_user(session: SessionDepAnnotated, user_in: UserCreate):
     return db_obj
 
 
-@router.patch("/{id}", tags=["users"], response_model=UserRead)
+@router.patch("/{id}", response_model=UserRead)
 def udpate_user(session: SessionDepAnnotated, id: int, user_in: UserUpdate):
     user_db = session.get(User, id)
     if not user_db:
@@ -87,7 +83,7 @@ def udpate_user(session: SessionDepAnnotated, id: int, user_in: UserUpdate):
     return user_db
 
 
-@router.delete("/{id}", tags=["users"])
+@router.delete("/{id}")
 def delete_user(
     session: SessionDepAnnotated,
     current_user: CurrentUserDepAnnotated,
@@ -116,9 +112,7 @@ def delete_user(
     return {"ok": True}
 
 
-@router.post(
-    "/{id}/recover", tags=["users"], dependencies=[IsAdminDep], response_model=UserRead
-)
+@router.post("/{id}/recover", dependencies=[IsAdminDep], response_model=UserRead)
 def recover_soft_deletion(session: SessionDepAnnotated, id: int):
     user_db = session.get(User, id)
 
