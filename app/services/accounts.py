@@ -1,7 +1,5 @@
-from fastapi import APIRouter
-from sqlmodel import select, Session
+from sqlmodel import Session
 
-from app.api.dependencies import CurrentUserDepAnnotated, SessionDepAnnotated
 from app.models import Account, AccountCreate, AccountRead, AccountUpdate, User
 
 

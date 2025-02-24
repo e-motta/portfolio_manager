@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 from sqlmodel import select
 
+from app import services
 from app.api.dependencies import CurrentUserDepAnnotated, SessionDepAnnotated
 from app.models import Account, AccountCreate, AccountRead, AccountUpdate
-from app import services
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app import services
 from app.api.dependencies import (
     CurrentUserDepAnnotated,
     IsAdminDep,
@@ -8,7 +9,6 @@ from app.api.dependencies import (
     validate_unique_username,
 )
 from app.models.users import User, UserCreate, UserRead, UserUpdate
-from app import services
 
 router = APIRouter(prefix="/users", tags=["users"])
 

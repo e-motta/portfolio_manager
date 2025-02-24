@@ -1,5 +1,5 @@
 from sqlalchemy import func
-from sqlmodel import select, Session
+from sqlmodel import Session, select
 
 from app.api.utils import get_password_hash
 from app.models.users import User, UserCreate, UserUpdate
