@@ -3,6 +3,7 @@ from sqlmodel import select
 
 from app.api.dependencies import CurrentUserDepAnnotated, SessionDepAnnotated
 from app.models import Account, AccountCreate, AccountRead, AccountUpdate
+from app import services
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 
@@ -18,10 +19,7 @@ def read_accounts(session: SessionDepAnnotated, current_user: CurrentUserDepAnno
 def create_account(
     session: SessionDepAnnotated,
     current_user: CurrentUserDepAnnotated,
-    account: AccountCreate,
+    account_in: AccountCreate,
 ):
-    account_db = Account.model_validate(account, update={"user_id": current_user.id})
-    session.add(account_db)
-    session.commit()
-    session.refresh(account_db)
+    account_db = services.accounts.create(session, account_in, current_user)
     return account_db
