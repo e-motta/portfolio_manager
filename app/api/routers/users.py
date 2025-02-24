@@ -1,48 +1,39 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func
-from sqlmodel import select
 
 from app.api.dependencies import (
     CurrentUserDepAnnotated,
     IsAdminDep,
     SessionDepAnnotated,
-    TokenDep,
     validate_unique_email,
     validate_unique_username,
 )
-from app.api.utils import get_password_hash
 from app.models.users import User, UserCreate, UserRead, UserUpdate
+from app import services
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get("/", response_model=list[UserRead], dependencies=[IsAdminDep])
-def read_users(
-    session: SessionDepAnnotated,
-    username: str | None = None,
-    include_deleted: bool = False,
-):
-    statement = select(User)
-
-    if username:
-        statement = statement.where(User.username == username)
-    if not include_deleted:
-        statement = statement.where(User.deleted_at == None)
-
-    users = session.exec(statement)
-
-    return users
+# Open
+# todo: register_user
 
 
+# Logged-in user
 @router.get("/me", response_model=UserRead)
 def read_user_me(current_user: CurrentUserDepAnnotated):
     return current_user
 
 
+# Admin
+@router.get("/", response_model=list[UserRead], dependencies=[IsAdminDep])
+def read_users(session: SessionDepAnnotated, include_deleted: bool = False):
+    users = services.users.fetch(session, include_deleted)
+    return users
+
+
 @router.get(
     "/{id}",
     response_model=UserRead,
-    dependencies=[TokenDep],
+    dependencies=[IsAdminDep],
 )
 def read_user(session: SessionDepAnnotated, id: int):
     user = session.get(User, id)
@@ -56,58 +47,48 @@ def read_user(session: SessionDepAnnotated, id: int):
 @router.post(
     "/",
     response_model=UserRead,
-    dependencies=[Depends(validate_unique_email), Depends(validate_unique_username)],
+    dependencies=[
+        IsAdminDep,
+        Depends(validate_unique_email),
+        Depends(validate_unique_username),
+    ],
 )
 def create_user(session: SessionDepAnnotated, user_in: UserCreate):
-    db_obj = User.model_validate(
-        user_in, update={"password_hash": get_password_hash(user_in.password)}
-    )
-    session.add(db_obj)
-    session.commit()
-    session.refresh(db_obj)
-    return db_obj
+    user = services.users.create(session, user_in)
+    return user
 
 
-@router.patch("/{id}", response_model=UserRead)
-def udpate_user(session: SessionDepAnnotated, id: int, user_in: UserUpdate):
+@router.patch(
+    "/{id}",
+    response_model=UserRead,
+    dependencies=[
+        IsAdminDep,
+        Depends(validate_unique_email),
+        Depends(validate_unique_username),
+    ],
+)
+def update_user(session: SessionDepAnnotated, id: int, user_in: UserUpdate):
     user_db = session.get(User, id)
     if not user_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    user_data = user_in.model_dump(exclude_unset=True)
-    user_db.sqlmodel_update(user_data)
-    session.add(user_db)
-    session.commit()
-    session.refresh(user_db)
-    return user_db
+    user = services.users.update(session, user_db, user_in)
+    return user
 
 
-@router.delete("/{id}")
-def delete_user(
-    session: SessionDepAnnotated,
-    current_user: CurrentUserDepAnnotated,
-    id: int,
-    hard_delete: bool = False,
-):
+@router.delete("/{id}", dependencies=[IsAdminDep])
+def delete_user(session: SessionDepAnnotated, id: int, hard_delete: bool = False):
     user_db = session.get(User, id)
     if not user_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
-    if not hard_delete:
-        user_db.sqlmodel_update({"deleted_at": func.now()})
-        session.add(user_db)
-        session.commit()
-        session.refresh(user_db)
-    elif not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not enough permissions"
-        )
+    if hard_delete:
+        services.users.hard_delete(session, user_db)
     else:
-        session.delete(user_db)
-        session.commit()
+        services.users.soft_delete(session, user_db)
 
     return {"ok": True}
 
@@ -125,8 +106,6 @@ def recover_soft_deletion(session: SessionDepAnnotated, id: int):
             status_code=status.HTTP_400_BAD_REQUEST, detail="User is already active"
         )
 
-    user_db.deleted_at = None
-    session.add(user_db)
-    session.commit()
+    services.users.recover(session, user_db)
 
     return user_db

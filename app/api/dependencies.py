@@ -10,7 +10,7 @@ from sqlmodel import Session, select
 from app.api.utils import verify_password
 from app.core.config import settings
 from app.core.db import engine
-from app.models import TokenData, User, UserBase
+from app.models import TokenData, User, UserCreate, UserUpdate
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -21,26 +21,33 @@ def get_db() -> Generator[Session, None, None]:
 SessionDepAnnotated = Annotated[Session, Depends(get_db)]
 
 
-def validate_unique_username(session: SessionDepAnnotated, user_in: UserBase):
-    statement = select(User).where(User.username == user_in.username)
-    user = session.exec(statement).first()
-    if user:
-        raise (
-            HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="Username already in use"
+def validate_unique_username(
+    session: SessionDepAnnotated, user_in: UserCreate | UserUpdate
+):
+    if user_in.username:
+        statement = select(User).where(User.username == user_in.username)
+        user = session.exec(statement).first()
+        if user:
+            raise (
+                HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Username already in use",
+                )
             )
-        )
 
 
-def validate_unique_email(session: SessionDepAnnotated, user_in: UserBase):
-    statement = select(User).where(User.email == user_in.email)
-    user = session.exec(statement).first()
-    if user:
-        raise (
-            HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="Email already in use"
+def validate_unique_email(
+    session: SessionDepAnnotated, user_in: UserCreate | UserUpdate
+):
+    if user_in.email:
+        statement = select(User).where(User.email == user_in.email)
+        user = session.exec(statement).first()
+        if user:
+            raise (
+                HTTPException(
+                    status_code=status.HTTP_409_CONFLICT, detail="Email already in use"
+                )
             )
-        )
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/token")
