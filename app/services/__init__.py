@@ -1,1 +1,1 @@
-from . import accounts, users
+from . import accounts, stocks, users

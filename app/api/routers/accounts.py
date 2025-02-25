@@ -10,7 +10,9 @@ router = APIRouter(prefix="/accounts", tags=["accounts"])
 
 @router.get("/", response_model=list[AccountRead])
 def read_accounts(session: SessionDepAnnotated, current_user: CurrentUserDepAnnotated):
-    statement = select(Account).where(Account.user_id == current_user.id)
+    statement = select(Account)
+    if not current_user.is_admin:
+        statement = statement.where(Account.user_id == current_user.id)
     accounts = session.exec(statement).all()
     return accounts
 
