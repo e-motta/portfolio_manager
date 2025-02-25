@@ -3,7 +3,7 @@ from sqlmodel import select
 
 from app.api.dependencies import CurrentUserDepAnnotated, SessionDepAnnotated
 from app.models import Account, Stock, StockCreate, StockRead, StockUpdate
-from app import services
+from app import crud
 
 router = APIRouter(prefix="/accounts/{account_id}/stocks", tags=["stocks"])
 
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/accounts/{account_id}/stocks", tags=["stocks"])
 def read_stocks(
     session: SessionDepAnnotated, current_user: CurrentUserDepAnnotated, account_id: int
 ):
-    account = services.accounts.get_by_id(session, account_id)
+    account = crud.accounts.get_by_id(session, account_id)
 
     if not account:
         raise HTTPException(
@@ -34,7 +34,7 @@ def create_stock(
     stock_in: StockCreate,
     account_id: int,
 ):
-    account = services.accounts.get_by_id(session, account_id)
+    account = crud.accounts.get_by_id(session, account_id)
 
     if not account:
         raise HTTPException(
@@ -46,5 +46,29 @@ def create_stock(
             status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
         )
 
-    stock_db = services.stocks.create(session, stock_in, account_id, current_user)
+    stock_db = crud.stocks.create(session, stock_in, account_id, current_user)
     return stock_db
+
+
+@router.patch("/{id}", response_model=StockRead)
+def update_stock(session: SessionDepAnnotated, id: int, stock_in: StockUpdate):
+    stock_db = crud.stocks.get_by_id(session, id)
+    if not stock_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Stock not found"
+        )
+
+    crud.stocks.update(session, stock_db, stock_in)
+    return stock_db
+
+
+@router.delete("/{id}")
+def delete_stock(session: SessionDepAnnotated, id: int):
+    stock_db = crud.stocks.get_by_id(session, id)
+    if not stock_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Stock not found"
+        )
+
+    crud.stocks.delete(session, stock_db)
+    return {"ok": True}

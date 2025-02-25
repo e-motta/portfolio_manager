@@ -34,7 +34,6 @@ def update(session: Session, user_db: User, user_in: UserUpdate):
     session.add(user_db)
     session.commit()
     session.refresh(user_db)
-    return user_db
 
 
 def hard_delete(session: Session, user_db: User):
