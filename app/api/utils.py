@@ -2,8 +2,10 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 from passlib.context import CryptContext
+from fastapi import HTTPException, status
 
 from app.core.config import settings
+from app.models import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -27,3 +29,16 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
         to_encode, settings.SECRET_KEY, algorithm=settings.AUTH_ALGORITHM
     )
     return encoded_jwt
+
+
+def verify_ownership_or_403(
+    child_owner_id: int | str, owner_id: int | str, current_user_is_admin: bool = False
+):
+    if current_user_is_admin:
+        return
+
+    has_access = child_owner_id == owner_id
+    if not has_access:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
+        )

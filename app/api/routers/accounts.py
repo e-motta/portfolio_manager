@@ -9,6 +9,7 @@ from app.api.dependencies import (
     get_account_or_404,
 )
 from app.models import Account, AccountCreate, AccountRead, AccountUpdate
+from app.api.utils import verify_ownership_or_403
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 
@@ -30,11 +31,7 @@ def read_account_detail(
     current_user: CurrentUserDepAnnotated,
     account_db: Account = Depends(get_account_or_404),
 ):
-    if current_user.id != account_db.user_id and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
-        )
-
+    verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
     return account_db
 
 
@@ -51,9 +48,11 @@ def create_account(
 @router.patch("/{account_id}", response_model=AccountRead)
 def update_account(
     session: SessionDepAnnotated,
+    current_user: CurrentUserDepAnnotated,
     account_in: AccountUpdate,
     account_db: Account = Depends(get_account_or_404),
 ):
+    verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
     crud.accounts.update(session, account_db, account_in)
     return account_db
 
@@ -61,7 +60,9 @@ def update_account(
 @router.delete("/{account_id}")
 def delete_account(
     session: SessionDepAnnotated,
+    current_user: CurrentUserDepAnnotated,
     account_db: Account = Depends(get_account_or_404),
 ):
+    verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
     crud.accounts.delete(session, account_db)
     return {"ok": True}

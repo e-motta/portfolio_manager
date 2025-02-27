@@ -9,6 +9,7 @@ from app.api.dependencies import (
 )
 from app.models import Account, Stock, StockCreate, StockRead, StockUpdate
 from app import crud
+from app.api.utils import verify_ownership_or_403
 
 router = APIRouter(prefix="/accounts/{account_id}/stocks", tags=["stocks"])
 
@@ -18,11 +19,7 @@ def read_stock_list(
     current_user: CurrentUserDepAnnotated,
     account_db: Account = Depends(get_account_or_404),
 ):
-    if current_user.id != account_db.user_id and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
-        )
-
+    verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
     return account_db.stocks
 
 
@@ -32,17 +29,8 @@ def read_stock_detail(
     account_db: Account = Depends(get_account_or_404),
     stock_db: Stock = Depends(get_stock_or_404),
 ):
-    if all(
-        [
-            current_user.id != account_db.user_id,
-            account_db.id != stock_db.account_id,
-            not current_user.is_admin,
-        ]
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
-        )
-
+    verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
+    verify_ownership_or_403(stock_db.account_id, account_db.id)
     return stock_db
 
 
@@ -53,11 +41,7 @@ def create_stock(
     stock_in: StockCreate,
     account_db: Account = Depends(get_account_or_404),
 ):
-    if current_user.id != account_db.user_id and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
-        )
-
+    verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
     stock_db = crud.stocks.create(session, stock_in, account_db)
     return stock_db
 
@@ -65,9 +49,13 @@ def create_stock(
 @router.patch("/{stock_id}", response_model=StockRead)
 def update_stock(
     session: SessionDepAnnotated,
+    current_user: CurrentUserDepAnnotated,
     stock_in: StockUpdate,
+    account_db: Account = Depends(get_account_or_404),
     stock_db: Stock = Depends(get_stock_or_404),
 ):
+    verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
+    verify_ownership_or_403(stock_db.account_id, account_db.id)
     crud.stocks.update(session, stock_db, stock_in)
     return stock_db
 
@@ -75,7 +63,11 @@ def update_stock(
 @router.delete("/{stock_id}")
 def delete_stock(
     session: SessionDepAnnotated,
+    current_user: CurrentUserDepAnnotated,
+    account_db: Account = Depends(get_account_or_404),
     stock_db: Stock = Depends(get_stock_or_404),
 ):
+    verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
+    verify_ownership_or_403(stock_db.account_id, account_db.id)
     crud.stocks.delete(session, stock_db)
     return {"ok": True}
