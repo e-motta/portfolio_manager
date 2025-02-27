@@ -7,6 +7,7 @@ from app.api.dependencies import (
     SessionDepAnnotated,
     validate_unique_email,
     validate_unique_username,
+    get_user_or_404,
 )
 from app.models.users import User, UserCreate, UserRead, UserUpdate
 
@@ -26,22 +27,20 @@ def read_user_me(current_user: CurrentUserDepAnnotated):
 # Admin
 @router.get("/", response_model=list[UserRead], dependencies=[IsAdminDep])
 def read_users(session: SessionDepAnnotated, include_deleted: bool = False):
-    users = crud.users.fetch(session, include_deleted)
+    if include_deleted:
+        users = crud.users.fetch_all(session)
+    else:
+        users = crud.users.fetch_active(session)
     return users
 
 
 @router.get(
-    "/{id}",
+    "/{user_id}",
     response_model=UserRead,
     dependencies=[IsAdminDep],
 )
-def read_user(session: SessionDepAnnotated, id: int):
-    user = session.get(User, id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-    return user
+def read_user(user_db: User = Depends(get_user_or_404)):
+    return user_db
 
 
 @router.post(
@@ -59,7 +58,7 @@ def create_user(session: SessionDepAnnotated, user_in: UserCreate):
 
 
 @router.patch(
-    "/{id}",
+    "/{user_id}",
     response_model=UserRead,
     dependencies=[
         IsAdminDep,
@@ -67,24 +66,21 @@ def create_user(session: SessionDepAnnotated, user_in: UserCreate):
         Depends(validate_unique_username),
     ],
 )
-def update_user(session: SessionDepAnnotated, id: int, user_in: UserUpdate):
-    user_db = session.get(User, id)
-    if not user_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+def update_user(
+    session: SessionDepAnnotated,
+    user_in: UserUpdate,
+    user_db: User = Depends(get_user_or_404),
+):
     crud.users.update(session, user_db, user_in)
     return user_db
 
 
-@router.delete("/{id}", dependencies=[IsAdminDep])
-def delete_user(session: SessionDepAnnotated, id: int, hard_delete: bool = False):
-    user_db = session.get(User, id)
-    if not user_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-
+@router.delete("/{user_id}", dependencies=[IsAdminDep])
+def delete_user(
+    session: SessionDepAnnotated,
+    user_db: User = Depends(get_user_or_404),
+    hard_delete: bool = False,
+):
     if hard_delete:
         crud.users.hard_delete(session, user_db)
     else:
@@ -93,19 +89,15 @@ def delete_user(session: SessionDepAnnotated, id: int, hard_delete: bool = False
     return {"ok": True}
 
 
-@router.post("/{id}/recover", dependencies=[IsAdminDep], response_model=UserRead)
-def recover_soft_deletion(session: SessionDepAnnotated, id: int):
-    user_db = session.get(User, id)
-
-    if not user_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+@router.post("/{user_id}/recover", dependencies=[IsAdminDep], response_model=UserRead)
+def recover_soft_deletion(
+    session: SessionDepAnnotated,
+    user_db: User = Depends(get_user_or_404),
+):
     if user_db.deleted_at is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="User is already active"
         )
 
     crud.users.recover(session, user_db)
-
     return user_db

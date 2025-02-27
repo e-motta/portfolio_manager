@@ -5,13 +5,15 @@ from app.api.utils import get_password_hash
 from app.models.users import User, UserCreate, UserUpdate
 
 
-def fetch(session: Session, include_deleted: bool = False):
+def fetch_all(session: Session):
     statement = select(User)
+    users = session.exec(statement).all()
+    return users
 
-    if not include_deleted:
-        statement = statement.where(User.deleted_at == None)
 
-    users = session.exec(statement)
+def fetch_active(session: Session):
+    statement = select(User).where(User.deleted_at == None)
+    users = session.exec(statement).all()
     return users
 
 

@@ -1,6 +1,12 @@
-from sqlmodel import select, Session
+from sqlmodel import select, Session, SQLModel
 
 from app.models import Account, AccountCreate, AccountRead, AccountUpdate, User
+
+
+def fetch_all(session: Session):
+    statement = select(Account)
+    accounts = session.exec(statement)
+    return accounts
 
 
 def create(session: Session, account_in: AccountCreate, current_user: User):
@@ -9,12 +15,6 @@ def create(session: Session, account_in: AccountCreate, current_user: User):
     session.commit()
     session.refresh(account_db)
     return account_db
-
-
-def get_by_id(session: Session, account_id: int) -> Account | None:
-    account_statement = select(Account).where(Account.id == account_id)
-    account = session.exec(account_statement).first()
-    return account
 
 
 def update(session: Session, account_db: Account, account_in: AccountUpdate):
