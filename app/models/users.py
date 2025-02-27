@@ -45,9 +45,18 @@ class UserRead(UserBase):
         return self.deleted_at is None
 
 
+class UserRegister(SQLModel):
+    username: str = Field(max_length=settings.USERNAME_MAX_LENGTH)
+    email: EmailStr
+    first_name: str
+    last_name: str
+    password: str
+
+
 class UserUpdate(SQLModel):
     username: str | None = Field(max_length=settings.USERNAME_MAX_LENGTH, default=None)
     email: EmailStr | None = None
     first_name: str | None = None
     last_name: str | None = None
+    password: str | None = None
     is_admin: bool = False

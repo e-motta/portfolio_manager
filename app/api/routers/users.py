@@ -1,132 +1,131 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func
-from sqlmodel import select
 
+from app import crud
 from app.api.dependencies import (
     CurrentUserDepAnnotated,
     IsAdminDep,
     SessionDepAnnotated,
-    TokenDep,
+    get_user_or_404,
     validate_unique_email,
     validate_unique_username,
 )
-from app.api.utils import get_password_hash
-from app.models.users import User, UserCreate, UserRead, UserUpdate
+from app.models.users import User, UserCreate, UserRead, UserRegister, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get("/", response_model=list[UserRead], dependencies=[IsAdminDep])
-def read_users(
-    session: SessionDepAnnotated,
-    username: str | None = None,
-    include_deleted: bool = False,
-):
-    statement = select(User)
-
-    if username:
-        statement = statement.where(User.username == username)
-    if not include_deleted:
-        statement = statement.where(User.deleted_at == None)
-
-    users = session.exec(statement)
-
-    return users
+# Open
+@router.post(
+    "/register",
+    response_model=UserRead,
+    dependencies=[
+        Depends(validate_unique_email),
+        Depends(validate_unique_username),
+    ],
+)
+def register_user(session: SessionDepAnnotated, user_in: UserRegister):
+    user = crud.users.register(session, user_in)
+    return user
 
 
+# Logged-in user
 @router.get("/me", response_model=UserRead)
 def read_user_me(current_user: CurrentUserDepAnnotated):
     return current_user
 
 
-@router.get(
-    "/{id}",
+@router.patch(
+    "/me",
     response_model=UserRead,
-    dependencies=[TokenDep],
+    dependencies=[
+        IsAdminDep,
+        Depends(validate_unique_email),
+        Depends(validate_unique_username),
+    ],
 )
-def read_user(session: SessionDepAnnotated, id: int):
-    user = session.get(User, id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-    return user
+def update_user_me(
+    session: SessionDepAnnotated,
+    current_user: CurrentUserDepAnnotated,
+    user_in: UserUpdate,
+):
+    crud.users.update(session, current_user, user_in)
+    return current_user
+
+
+# Admin
+@router.get("/", response_model=list[UserRead], dependencies=[IsAdminDep])
+def read_user_list(session: SessionDepAnnotated, include_deleted: bool = False):
+    if include_deleted:
+        users = crud.users.fetch_all(session)
+    else:
+        users = crud.users.fetch_active(session)
+    return users
+
+
+@router.get(
+    "/{user_id}",
+    response_model=UserRead,
+    dependencies=[IsAdminDep],
+)
+def read_user_detail(user_db: User = Depends(get_user_or_404)):
+    return user_db
 
 
 @router.post(
     "/",
     response_model=UserRead,
-    dependencies=[Depends(validate_unique_email), Depends(validate_unique_username)],
+    dependencies=[
+        IsAdminDep,
+        Depends(validate_unique_email),
+        Depends(validate_unique_username),
+    ],
 )
 def create_user(session: SessionDepAnnotated, user_in: UserCreate):
-    db_obj = User.model_validate(
-        user_in, update={"password_hash": get_password_hash(user_in.password)}
-    )
-    session.add(db_obj)
-    session.commit()
-    session.refresh(db_obj)
-    return db_obj
+    user = crud.users.create(session, user_in)
+    return user
 
 
-@router.patch("/{id}", response_model=UserRead)
-def udpate_user(session: SessionDepAnnotated, id: int, user_in: UserUpdate):
-    user_db = session.get(User, id)
-    if not user_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-    user_data = user_in.model_dump(exclude_unset=True)
-    user_db.sqlmodel_update(user_data)
-    session.add(user_db)
-    session.commit()
-    session.refresh(user_db)
+@router.patch(
+    "/{user_id}",
+    response_model=UserRead,
+    dependencies=[
+        IsAdminDep,
+        Depends(validate_unique_email),
+        Depends(validate_unique_username),
+    ],
+)
+def update_user(
+    session: SessionDepAnnotated,
+    user_in: UserUpdate,
+    user_db: User = Depends(get_user_or_404),
+):
+    crud.users.update(session, user_db, user_in)
     return user_db
 
 
-@router.delete("/{id}")
+@router.delete("/{user_id}", dependencies=[IsAdminDep])
 def delete_user(
     session: SessionDepAnnotated,
-    current_user: CurrentUserDepAnnotated,
-    id: int,
+    user_db: User = Depends(get_user_or_404),
     hard_delete: bool = False,
 ):
-    user_db = session.get(User, id)
-    if not user_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-
-    if not hard_delete:
-        user_db.sqlmodel_update({"deleted_at": func.now()})
-        session.add(user_db)
-        session.commit()
-        session.refresh(user_db)
-    elif not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not enough permissions"
-        )
+    if hard_delete:
+        crud.users.hard_delete(session, user_db)
     else:
-        session.delete(user_db)
-        session.commit()
+        crud.users.soft_delete(session, user_db)
 
     return {"ok": True}
 
 
-@router.post("/{id}/recover", dependencies=[IsAdminDep], response_model=UserRead)
-def recover_soft_deletion(session: SessionDepAnnotated, id: int):
-    user_db = session.get(User, id)
-
-    if not user_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+@router.post("/{user_id}/recover", dependencies=[IsAdminDep], response_model=UserRead)
+def recover_soft_deletion(
+    session: SessionDepAnnotated,
+    user_db: User = Depends(get_user_or_404),
+):
     if user_db.deleted_at is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="User is already active"
         )
 
-    user_db.deleted_at = None
-    session.add(user_db)
-    session.commit()
-
+    crud.users.recover(session, user_db)
     return user_db
