@@ -5,13 +5,13 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
-from sqlmodel import Session, select, SQLModel
+from sqlmodel import Session, select
 
+from app import crud
 from app.api.utils import verify_password
 from app.core.config import settings
 from app.core.db import engine
-from app.models import TokenData, User, UserCreate, UserUpdate, Account
-from app import crud
+from app.models import Account, Stock, TokenData, User, UserCreate, UserUpdate
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -110,7 +110,7 @@ IsAdminDep = Depends(is_admin)
 
 
 def get_user_or_404(session: SessionDepAnnotated, user_id: int):
-    user_db = crud.get_by_id(Account, session, user_id)
+    user_db = crud.get_by_id(User, session, user_id)
     if not user_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
@@ -128,7 +128,7 @@ def get_account_or_404(session: SessionDepAnnotated, account_id: int):
 
 
 def get_stock_or_404(session: SessionDepAnnotated, stock_id: int):
-    stock_db = crud.get_by_id(Account, session, stock_id)
+    stock_db = crud.get_by_id(Stock, session, stock_id)
     if not stock_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Stock not found"

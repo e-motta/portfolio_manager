@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel, Session
+from sqlmodel import Session, SQLModel
 
 
 def get_by_id[

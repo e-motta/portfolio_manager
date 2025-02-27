@@ -1,8 +1,6 @@
-from fastapi import APIRouter, HTTPException, status
-from sqlmodel import select, Session
+from sqlmodel import Session
 
-from app.api.dependencies import CurrentUserDepAnnotated, SessionDepAnnotated
-from app.models import Account, Stock, StockCreate, StockRead, StockUpdate, User
+from app.models import Account, Stock, StockCreate, StockUpdate
 
 
 def create(session: Session, stock_in: StockCreate, account_db: Account):

@@ -1,15 +1,14 @@
-from fastapi import APIRouter, HTTPException, status, Depends
-from sqlmodel import select
+from fastapi import APIRouter, Depends
 
+from app import crud
 from app.api.dependencies import (
     CurrentUserDepAnnotated,
     SessionDepAnnotated,
     get_account_or_404,
     get_stock_or_404,
 )
-from app.models import Account, Stock, StockCreate, StockRead, StockUpdate
-from app import crud
 from app.api.utils import verify_ownership_or_403
+from app.models import Account, Stock, StockCreate, StockRead, StockUpdate
 
 router = APIRouter(prefix="/accounts/{account_id}/stocks", tags=["stocks"])
 

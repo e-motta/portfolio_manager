@@ -2,7 +2,7 @@ from sqlalchemy import func
 from sqlmodel import Session, select
 
 from app.api.utils import get_password_hash
-from app.models.users import User, UserCreate, UserUpdate, UserRegister
+from app.models.users import User, UserCreate, UserRegister, UserUpdate
 
 
 def fetch_all(session: Session):

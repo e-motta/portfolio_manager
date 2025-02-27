@@ -5,11 +5,11 @@ from app.api.dependencies import (
     CurrentUserDepAnnotated,
     IsAdminDep,
     SessionDepAnnotated,
+    get_user_or_404,
     validate_unique_email,
     validate_unique_username,
-    get_user_or_404,
 )
-from app.models.users import User, UserCreate, UserRead, UserUpdate, UserRegister
+from app.models.users import User, UserCreate, UserRead, UserRegister, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["users"])
 

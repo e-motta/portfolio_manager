@@ -1,6 +1,6 @@
-from sqlmodel import select, Session, SQLModel
+from sqlmodel import Session, select
 
-from app.models import Account, AccountCreate, AccountRead, AccountUpdate, User
+from app.models import Account, AccountCreate, AccountUpdate, User
 
 
 def fetch_all(session: Session):

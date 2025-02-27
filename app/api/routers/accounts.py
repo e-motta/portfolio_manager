@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import select
-from typing import Annotated
+
+from fastapi import APIRouter, Depends
 
 from app import crud
 from app.api.dependencies import (
@@ -8,8 +7,8 @@ from app.api.dependencies import (
     SessionDepAnnotated,
     get_account_or_404,
 )
-from app.models import Account, AccountCreate, AccountRead, AccountUpdate
 from app.api.utils import verify_ownership_or_403
+from app.models import Account, AccountCreate, AccountRead, AccountUpdate
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 
