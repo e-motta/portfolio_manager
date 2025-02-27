@@ -34,6 +34,24 @@ def read_user_me(current_user: CurrentUserDepAnnotated):
     return current_user
 
 
+@router.patch(
+    "/me",
+    response_model=UserRead,
+    dependencies=[
+        IsAdminDep,
+        Depends(validate_unique_email),
+        Depends(validate_unique_username),
+    ],
+)
+def update_user_me(
+    session: SessionDepAnnotated,
+    current_user: CurrentUserDepAnnotated,
+    user_in: UserUpdate,
+):
+    crud.users.update(session, current_user, user_in)
+    return current_user
+
+
 # Admin
 @router.get("/", response_model=list[UserRead], dependencies=[IsAdminDep])
 def read_user_list(session: SessionDepAnnotated, include_deleted: bool = False):
