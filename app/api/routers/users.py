@@ -26,7 +26,7 @@ def read_user_me(current_user: CurrentUserDepAnnotated):
 
 # Admin
 @router.get("/", response_model=list[UserRead], dependencies=[IsAdminDep])
-def read_users(session: SessionDepAnnotated, include_deleted: bool = False):
+def read_user_list(session: SessionDepAnnotated, include_deleted: bool = False):
     if include_deleted:
         users = crud.users.fetch_all(session)
     else:
@@ -39,7 +39,7 @@ def read_users(session: SessionDepAnnotated, include_deleted: bool = False):
     response_model=UserRead,
     dependencies=[IsAdminDep],
 )
-def read_user(user_db: User = Depends(get_user_or_404)):
+def read_user_detail(user_db: User = Depends(get_user_or_404)):
     return user_db
 
 

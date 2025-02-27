@@ -14,7 +14,7 @@ router = APIRouter(prefix="/accounts/{account_id}/stocks", tags=["stocks"])
 
 
 @router.get("/", response_model=list[StockRead])
-def read_stocks(
+def read_stock_list(
     current_user: CurrentUserDepAnnotated,
     account_db: Account = Depends(get_account_or_404),
 ):
@@ -24,6 +24,26 @@ def read_stocks(
         )
 
     return account_db.stocks
+
+
+@router.get("/{stock_id}", response_model=StockRead)
+def read_stock_detail(
+    current_user: CurrentUserDepAnnotated,
+    account_db: Account = Depends(get_account_or_404),
+    stock_db: Stock = Depends(get_stock_or_404),
+):
+    if all(
+        [
+            current_user.id != account_db.user_id,
+            account_db.id != stock_db.account_id,
+            not current_user.is_admin,
+        ]
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
+        )
+
+    return stock_db
 
 
 @router.post("/", response_model=StockRead)

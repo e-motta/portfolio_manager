@@ -14,7 +14,7 @@ router = APIRouter(prefix="/accounts", tags=["accounts"])
 
 
 @router.get("/", response_model=list[AccountRead])
-def read_accounts(
+def read_account_list(
     session: SessionDepAnnotated,
     current_user: CurrentUserDepAnnotated,
 ):
@@ -23,6 +23,19 @@ def read_accounts(
     else:
         accounts = current_user.accounts
     return accounts
+
+
+@router.get("/", response_model=AccountRead)
+def read_account_detail(
+    current_user: CurrentUserDepAnnotated,
+    account_db: Account = Depends(get_account_or_404),
+):
+    if current_user.id != account_db.user_id and not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
+        )
+
+    return account_db
 
 
 @router.post("/", response_model=AccountRead)
