@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends
 
 from app import crud
@@ -25,7 +24,7 @@ def read_account_list(
     return accounts
 
 
-@router.get("/", response_model=AccountRead)
+@router.get("/{account_id}", response_model=AccountRead)
 def read_account_detail(
     current_user: CurrentUserDepAnnotated,
     account_db: Account = Depends(get_account_or_404),
