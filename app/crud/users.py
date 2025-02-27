@@ -2,7 +2,7 @@ from sqlalchemy import func
 from sqlmodel import Session, select
 
 from app.api.utils import get_password_hash
-from app.models.users import User, UserCreate, UserUpdate
+from app.models.users import User, UserCreate, UserUpdate, UserRegister
 
 
 def fetch_all(session: Session):
@@ -25,6 +25,12 @@ def create(session: Session, user_in: UserCreate):
     session.commit()
     session.refresh(db_obj)
     return db_obj
+
+
+def register(session: Session, user_in: UserRegister):
+    user_data = UserCreate.model_validate(user_in)
+    user = create(session, user_data)
+    return user
 
 
 def update(session: Session, user_db: User, user_in: UserUpdate):

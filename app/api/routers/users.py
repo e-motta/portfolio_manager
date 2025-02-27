@@ -9,13 +9,23 @@ from app.api.dependencies import (
     validate_unique_username,
     get_user_or_404,
 )
-from app.models.users import User, UserCreate, UserRead, UserUpdate
+from app.models.users import User, UserCreate, UserRead, UserUpdate, UserRegister
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
 # Open
-# todo: register_user
+@router.post(
+    "/register",
+    response_model=UserRead,
+    dependencies=[
+        Depends(validate_unique_email),
+        Depends(validate_unique_username),
+    ],
+)
+def register_user(session: SessionDepAnnotated, user_in: UserRegister):
+    user = crud.users.register(session, user_in)
+    return user
 
 
 # Logged-in user
