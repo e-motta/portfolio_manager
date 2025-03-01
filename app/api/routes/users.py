@@ -74,6 +74,7 @@ def read_user_detail(user_db: User = Depends(get_user_or_404)):
 @router.post(
     "/",
     response_model=UserRead,
+    status_code=status.HTTP_201_CREATED,
     dependencies=[
         IsAdminDep,
         Depends(validate_unique_email),
@@ -103,7 +104,9 @@ def update_user(
     return user_db
 
 
-@router.delete("/{user_id}", dependencies=[IsAdminDep])
+@router.delete(
+    "/{user_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[IsAdminDep]
+)
 def delete_user(
     session: SessionDepAnnotated,
     user_db: User = Depends(get_user_or_404),
@@ -117,7 +120,7 @@ def delete_user(
     return {"ok": True}
 
 
-@router.post("/{user_id}/recover", dependencies=[IsAdminDep], response_model=UserRead)
+@router.patch("/{user_id}/recover", dependencies=[IsAdminDep], response_model=UserRead)
 def recover_soft_deletion(
     session: SessionDepAnnotated,
     user_db: User = Depends(get_user_or_404),

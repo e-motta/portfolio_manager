@@ -9,5 +9,8 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     USERNAME_MAX_LENGTH: int = 12
 
+    # TEST_DATABASE_URL: str = "sqlite:///test.db"
+    TEST_DATABASE_URL: str = "sqlite:///:memory:"
+
 
 settings = Settings()

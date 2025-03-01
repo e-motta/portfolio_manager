@@ -14,12 +14,12 @@ from app.core.db import engine
 from app.models import Account, Stock, TokenData, User, UserCreate, UserUpdate
 
 
-def get_db() -> Generator[Session, None, None]:
+def get_session() -> Generator[Session, None, None]:
     with Session(engine) as session:
         yield session
 
 
-SessionDepAnnotated = Annotated[Session, Depends(get_db)]
+SessionDepAnnotated = Annotated[Session, Depends(get_session)]
 
 
 def validate_unique_username(
