@@ -21,6 +21,7 @@ router = APIRouter(
 @router.post(
     "/register",
     response_model=UserRead,
+    status_code=status.HTTP_201_CREATED,
     dependencies=[
         Depends(validate_unique_email),
         Depends(validate_unique_username),
@@ -41,7 +42,6 @@ def read_user_me(current_user: CurrentUserDepAnnotated):
     "/me",
     response_model=UserRead,
     dependencies=[
-        IsAdminDep,
         Depends(validate_unique_email),
         Depends(validate_unique_username),
     ],

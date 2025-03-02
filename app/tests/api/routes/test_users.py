@@ -196,6 +196,44 @@ def test_recover_soft_deletion(
     assert not data["deleted_at"]
 
 
-# todo: add tests for register and /me routes
+def test_register_user(client: TestClient):
+    body = {
+        "username": "new_username",
+        "email": "new_email@example.com",
+        "first_name": "first",
+        "last_name": "last",
+        "password": "password",
+    }
+    r = client.post(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/register",
+        json=body,
+    )
+    assert r.status_code == status.HTTP_201_CREATED
+    data = r.json()
+    assert data["username"] == "new_username"
+
+
+def test_read_user_me(client: TestClient, normal_user_token_headers: dict[str, str]):
+    r = client.get(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/me",
+        headers=normal_user_token_headers,
+    )
+    assert r.status_code == status.HTTP_200_OK
+    data = r.json()
+    assert "username" in data
+
+
+def test_update_user_me(client: TestClient, normal_user_token_headers: dict[str, str]):
+    body = {"username": "new_username"}
+    r = client.patch(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/me",
+        headers=normal_user_token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_200_OK
+    data = r.json()
+    assert data["username"] == "new_username"
+
+
 # todo: add tests for limitations (value lengths, etc.)
 # todo: implement that related accounts are deleted (cascade)
