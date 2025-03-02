@@ -9,9 +9,12 @@ from app.api.dependencies import (
     validate_unique_email,
     validate_unique_username,
 )
+from app.core.config import settings
 from app.models.users import User, UserCreate, UserRead, UserRegister, UserUpdate
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(
+    prefix=f"/{settings.USERS_ROUTE_STR}", tags=[settings.USERS_ROUTE_STR]
+)
 
 
 # Open

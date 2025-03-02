@@ -9,7 +9,7 @@ from app.api.dependencies import get_session
 from app.core.config import settings
 from app.main import app
 from app.models import SQLModel
-from app.tests.utils import create_user, get_token_headers, generate_random_string
+from app.tests.utils import create_user, generate_random_string, get_token_headers
 
 
 @pytest.fixture(scope="function", autouse=True)

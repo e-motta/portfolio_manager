@@ -7,49 +7,60 @@ from app.tests.utils import create_user
 
 
 def test_user_unauthorized(client: TestClient):
-    r_get_list = client.get(f"{settings.API_V1_STR}/users/")
+    r_get_list = client.get(f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/")
     assert r_get_list.status_code == status.HTTP_401_UNAUTHORIZED
-    r_get_detail = client.get(f"{settings.API_V1_STR}/users/1")
+    r_get_detail = client.get(f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1")
     assert r_get_detail.status_code == status.HTTP_401_UNAUTHORIZED
-    r_post = client.post(f"{settings.API_V1_STR}/users/")
+    r_post = client.post(f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/")
     assert r_post.status_code == status.HTTP_401_UNAUTHORIZED
-    r_patch = client.patch(f"{settings.API_V1_STR}/users/1")
+    r_patch = client.patch(f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1")
     assert r_patch.status_code == status.HTTP_401_UNAUTHORIZED
-    r_delete = client.delete(f"{settings.API_V1_STR}/users/1")
+    r_delete = client.delete(f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1")
     assert r_delete.status_code == status.HTTP_401_UNAUTHORIZED
-    r_recover = client.patch(f"{settings.API_V1_STR}/users/1/recover")
+    r_recover = client.patch(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1/recover"
+    )
     assert r_recover.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 def test_user_forbidden(client: TestClient, normal_user_token_headers: dict[str, str]):
     r_get_list = client.get(
-        f"{settings.API_V1_STR}/users/", headers=normal_user_token_headers
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
+        headers=normal_user_token_headers,
     )
     assert r_get_list.status_code == status.HTTP_403_FORBIDDEN
     r_get_detail = client.get(
-        f"{settings.API_V1_STR}/users/1", headers=normal_user_token_headers
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1",
+        headers=normal_user_token_headers,
     )
     assert r_get_detail.status_code == status.HTTP_403_FORBIDDEN
     r_post = client.post(
-        f"{settings.API_V1_STR}/users/", headers=normal_user_token_headers
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
+        headers=normal_user_token_headers,
     )
     assert r_post.status_code == status.HTTP_403_FORBIDDEN
     r_patch = client.patch(
-        f"{settings.API_V1_STR}/users/1", headers=normal_user_token_headers
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1",
+        headers=normal_user_token_headers,
     )
     assert r_patch.status_code == status.HTTP_403_FORBIDDEN
     r_delete = client.delete(
-        f"{settings.API_V1_STR}/users/1", headers=normal_user_token_headers
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1",
+        headers=normal_user_token_headers,
     )
     assert r_delete.status_code == status.HTTP_403_FORBIDDEN
     r_recover = client.patch(
-        f"{settings.API_V1_STR}/users/1/recover", headers=normal_user_token_headers
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1/recover",
+        headers=normal_user_token_headers,
     )
     assert r_recover.status_code == status.HTTP_403_FORBIDDEN
 
 
 def test_read_user_list(client: TestClient, admin_token_headers: dict[str, str]):
-    r = client.get(f"{settings.API_V1_STR}/users/", headers=admin_token_headers)
+    r = client.get(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
+        headers=admin_token_headers,
+    )
     assert r.status_code == status.HTTP_200_OK
     data = r.json()
     assert len(data) == 1
@@ -57,7 +68,10 @@ def test_read_user_list(client: TestClient, admin_token_headers: dict[str, str])
 
 
 def test_read_user_detail(client: TestClient, admin_token_headers: dict[str, str]):
-    r = client.get(f"{settings.API_V1_STR}/users/1", headers=admin_token_headers)
+    r = client.get(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1",
+        headers=admin_token_headers,
+    )
     assert r.status_code == status.HTTP_200_OK
     data = r.json()
     assert "username" in data
@@ -66,7 +80,10 @@ def test_read_user_detail(client: TestClient, admin_token_headers: dict[str, str
 def test_read_user_detail_not_found(
     client: TestClient, admin_token_headers: dict[str, str]
 ):
-    r = client.get(f"{settings.API_V1_STR}/users/99", headers=admin_token_headers)
+    r = client.get(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/99",
+        headers=admin_token_headers,
+    )
     assert r.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -79,7 +96,7 @@ def test_create_user(client: TestClient, admin_token_headers: dict[str, str]):
         "password": "password",
     }
     r = client.post(
-        f"{settings.API_V1_STR}/users/",
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
         headers=admin_token_headers,
         json=body,
     )
@@ -100,7 +117,7 @@ def test_update_user(
 
     body = {"username": "new_username"}
     r = client.patch(
-        f"{settings.API_V1_STR}/users/{user.id}",
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
         headers=admin_token_headers,
         json=body,
     )
@@ -115,14 +132,15 @@ def test_hard_delete_user(
     user = create_user(session=session)
 
     r = client.delete(
-        f"{settings.API_V1_STR}/users/{user.id}",
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
         headers=admin_token_headers,
         params={"hard_delete": True},
     )
     assert r.status_code == status.HTTP_204_NO_CONTENT
 
     r = client.get(
-        f"{settings.API_V1_STR}/users/{user.id}", headers=admin_token_headers
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
+        headers=admin_token_headers,
     )
     assert r.status_code == status.HTTP_404_NOT_FOUND
 
@@ -133,12 +151,14 @@ def test_soft_delete_user(
     user = create_user(session=session)
 
     r = client.delete(
-        f"{settings.API_V1_STR}/users/{user.id}", headers=admin_token_headers
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
+        headers=admin_token_headers,
     )
     assert r.status_code == status.HTTP_204_NO_CONTENT
 
     r = client.get(
-        f"{settings.API_V1_STR}/users/{user.id}", headers=admin_token_headers
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
+        headers=admin_token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
     data = r.json()
@@ -152,12 +172,14 @@ def test_recover_soft_deletion(
     user = create_user(session=session)
 
     r = client.delete(
-        f"{settings.API_V1_STR}/users/{user.id}", headers=admin_token_headers
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
+        headers=admin_token_headers,
     )
     assert r.status_code == status.HTTP_204_NO_CONTENT
 
     r = client.get(
-        f"{settings.API_V1_STR}/users/{user.id}", headers=admin_token_headers
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
+        headers=admin_token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
     data = r.json()
@@ -165,7 +187,7 @@ def test_recover_soft_deletion(
     assert data["deleted_at"]
 
     r = client.patch(
-        f"{settings.API_V1_STR}/users/{user.id}/recover",
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}/recover",
         headers=admin_token_headers,
     )
     assert r.status_code == status.HTTP_200_OK

@@ -7,9 +7,12 @@ from app.api.dependencies import (
     get_account_or_404,
 )
 from app.api.utils import verify_ownership_or_403
+from app.core.config import settings
 from app.models import Account, AccountCreate, AccountRead, AccountUpdate
 
-router = APIRouter(prefix="/accounts", tags=["accounts"])
+router = APIRouter(
+    prefix=f"/{settings.ACCOUNTS_ROUTE_STR}", tags=[settings.ACCOUNTS_ROUTE_STR]
+)
 
 
 @router.get("/", response_model=list[AccountRead])

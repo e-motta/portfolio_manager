@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
-from app.tests.utils import create_user, create_account, create_stock, get_token_headers
+from app.tests.utils import create_account, create_stock, create_user, get_token_headers
 
 
 def test_get_stock_list(
@@ -17,7 +17,7 @@ def test_get_stock_list(
     )
 
     r = client.get(
-        f"{settings.API_V1_STR}/accounts/{account.id}/stocks",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}",
         headers=token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
@@ -36,7 +36,7 @@ def test_get_stock_detail(
     )
 
     r = client.get(
-        f"{settings.API_V1_STR}/accounts/{account.id}/stocks/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
         headers=token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
@@ -60,7 +60,7 @@ def test_create_stock(
     }
 
     r = client.post(
-        f"{settings.API_V1_STR}/accounts/{account.id}/stocks/",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/",
         headers=token_headers,
         json=body,
     )
@@ -84,7 +84,7 @@ def test_update_stock(
     }
 
     r = client.patch(
-        f"{settings.API_V1_STR}/accounts/{account.id}/stocks/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
         headers=token_headers,
         json=body,
     )
@@ -104,13 +104,13 @@ def test_delete_stock(
     )
 
     r_delete = client.delete(
-        f"{settings.API_V1_STR}/accounts/{account.id}/stocks/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
         headers=token_headers,
     )
     assert r_delete.status_code == status.HTTP_204_NO_CONTENT
 
     r_get = client.get(
-        f"{settings.API_V1_STR}/accounts/{account.id}/stocks/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
         headers=token_headers,
     )
     assert r_get.status_code == status.HTTP_404_NOT_FOUND

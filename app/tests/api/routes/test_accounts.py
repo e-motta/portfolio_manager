@@ -3,19 +3,19 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
-from app.tests.utils import create_user, create_account, get_token_headers
+from app.tests.utils import create_account, create_user, get_token_headers
 
 
 def test_account_unauthorized(client: TestClient):
-    r_get_list = client.get(f"{settings.API_V1_STR}/accounts/")
+    r_get_list = client.get(f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/")
     assert r_get_list.status_code == status.HTTP_401_UNAUTHORIZED
-    r_get_detail = client.get(f"{settings.API_V1_STR}/accounts/1")
+    r_get_detail = client.get(f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/1")
     assert r_get_detail.status_code == status.HTTP_401_UNAUTHORIZED
-    r_post = client.post(f"{settings.API_V1_STR}/accounts/")
+    r_post = client.post(f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/")
     assert r_post.status_code == status.HTTP_401_UNAUTHORIZED
-    r_patch = client.patch(f"{settings.API_V1_STR}/accounts/1")
+    r_patch = client.patch(f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/1")
     assert r_patch.status_code == status.HTTP_401_UNAUTHORIZED
-    r_delete = client.delete(f"{settings.API_V1_STR}/accounts/1")
+    r_delete = client.delete(f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/1")
     assert r_delete.status_code == status.HTTP_401_UNAUTHORIZED
 
 
@@ -30,17 +30,19 @@ def test_account_forbidden(
     create_account(session=session, current_user=user)
 
     r_get_detail = client.get(
-        f"{settings.API_V1_STR}/accounts/1", headers=normal_user_token_headers
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/1",
+        headers=normal_user_token_headers,
     )
     assert r_get_detail.status_code == status.HTTP_403_FORBIDDEN
     r_patch = client.patch(
-        f"{settings.API_V1_STR}/accounts/1",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/1",
         headers=normal_user_token_headers,
         json={"name": "new_name"},
     )
     assert r_patch.status_code == status.HTTP_403_FORBIDDEN
     r_delete = client.delete(
-        f"{settings.API_V1_STR}/accounts/1", headers=normal_user_token_headers
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/1",
+        headers=normal_user_token_headers,
     )
     assert r_delete.status_code == status.HTTP_403_FORBIDDEN
 
@@ -54,7 +56,9 @@ def test_get_account_list(
         client=client, username=test_username, password=test_password
     )
 
-    r = client.get(f"{settings.API_V1_STR}/accounts", headers=token_headers)
+    r = client.get(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}", headers=token_headers
+    )
     assert r.status_code == status.HTTP_200_OK
     data = r.json()
     assert len(data) == 1
@@ -70,7 +74,8 @@ def test_get_account_detail(
     )
 
     r = client.get(
-        f"{settings.API_V1_STR}/accounts/{account.id}", headers=token_headers
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}",
+        headers=token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
 
@@ -88,7 +93,7 @@ def test_create_account(
         "buying_power": 1000,
     }
     r_post = client.post(
-        f"{settings.API_V1_STR}/accounts/",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/",
         headers=token_headers,
         json=body,
     )
@@ -97,7 +102,8 @@ def test_create_account(
     assert data_post["id"] == 1
 
     r_get = client.get(
-        f"{settings.API_V1_STR}/accounts/{data_post['id']}", headers=token_headers
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{data_post['id']}",
+        headers=token_headers,
     )
     assert r_get.status_code == status.HTTP_200_OK
     data_get = r_get.json()
@@ -118,7 +124,7 @@ def test_update_account(
     }
 
     r = client.patch(
-        f"{settings.API_V1_STR}/accounts/{account.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}",
         headers=token_headers,
         json=body,
     )
@@ -137,12 +143,14 @@ def test_delete_account(
     )
 
     r_delete = client.delete(
-        f"{settings.API_V1_STR}/accounts/{account.id}", headers=token_headers
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}",
+        headers=token_headers,
     )
     assert r_delete.status_code == status.HTTP_204_NO_CONTENT
 
     r_get = client.get(
-        f"{settings.API_V1_STR}/accounts/{account.id}", headers=token_headers
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}",
+        headers=token_headers,
     )
     assert r_get.status_code == status.HTTP_404_NOT_FOUND
 

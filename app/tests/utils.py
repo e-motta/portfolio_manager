@@ -1,12 +1,13 @@
-from fastapi.testclient import TestClient
-from sqlmodel import Session
-from decimal import Decimal
 import random
 import string
+from decimal import Decimal
+
+from fastapi.testclient import TestClient
+from sqlmodel import Session
 
 from app import crud
 from app.core.config import settings
-from app.models import User, UserCreate, Account, AccountCreate, Stock, StockCreate
+from app.models import Account, AccountCreate, Stock, StockCreate, User, UserCreate
 
 
 def create_user(

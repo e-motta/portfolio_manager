@@ -8,9 +8,13 @@ from app.api.dependencies import (
     get_stock_or_404,
 )
 from app.api.utils import verify_ownership_or_403
+from app.core.config import settings
 from app.models import Account, Stock, StockCreate, StockRead, StockUpdate
 
-router = APIRouter(prefix="/accounts/{account_id}/stocks", tags=["stocks"])
+router = APIRouter(
+    prefix=f"/{settings.ACCOUNTS_ROUTE_STR}/{{account_id}}/{settings.STOCKS_ROUTE_STR}",
+    tags=[settings.STOCKS_ROUTE_STR],
+)
 
 
 @router.get("/", response_model=list[StockRead])
