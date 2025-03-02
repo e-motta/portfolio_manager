@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from app import crud
 from app.api.dependencies import (
@@ -33,7 +33,7 @@ def read_stock_detail(
     return stock_db
 
 
-@router.post("/", response_model=StockRead)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=StockRead)
 def create_stock(
     session: SessionDepAnnotated,
     current_user: CurrentUserDepAnnotated,
@@ -59,7 +59,7 @@ def update_stock(
     return stock_db
 
 
-@router.delete("/{stock_id}")
+@router.delete("/{stock_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_stock(
     session: SessionDepAnnotated,
     current_user: CurrentUserDepAnnotated,

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from app import crud
 from app.api.dependencies import (
@@ -33,7 +33,7 @@ def read_account_detail(
     return account_db
 
 
-@router.post("/", response_model=AccountRead)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=AccountRead)
 def create_account(
     session: SessionDepAnnotated,
     current_user: CurrentUserDepAnnotated,
@@ -55,7 +55,7 @@ def update_account(
     return account_db
 
 
-@router.delete("/{account_id}")
+@router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_account(
     session: SessionDepAnnotated,
     current_user: CurrentUserDepAnnotated,

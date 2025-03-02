@@ -9,7 +9,7 @@ from app.api.dependencies import get_session
 from app.core.config import settings
 from app.main import app
 from app.models import SQLModel
-from app.tests.utils import create_user, get_token_headers
+from app.tests.utils import create_user, get_token_headers, generate_random_string
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -55,8 +55,8 @@ def admin_token_headers(client: TestClient, session: Session) -> dict[str, str]:
 
 @pytest.fixture(scope="function")
 def normal_user_token_headers(client: TestClient, session: Session) -> dict[str, str]:
-    username = "user"
-    email = "user@example.com"
+    username = "normal_user"
+    email = "normal_user@example.com"
     password = "password"
     create_user(
         session=session,
@@ -69,3 +69,13 @@ def normal_user_token_headers(client: TestClient, session: Session) -> dict[str,
         client=client, username=username, password=password
     )
     return token_headers
+
+
+@pytest.fixture(scope="function")
+def test_username():
+    return generate_random_string()
+
+
+@pytest.fixture(scope="function")
+def test_password():
+    return generate_random_string()

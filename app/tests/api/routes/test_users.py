@@ -172,3 +172,8 @@ def test_recover_soft_deletion(
     data = r.json()
     assert data["is_active"]
     assert not data["deleted_at"]
+
+
+# todo: add tests for register and /me routes
+# todo: add tests for limitations (value lengths, etc.)
+# todo: implement that related accounts are deleted (cascade)
