@@ -22,9 +22,7 @@ def get_session() -> Generator[Session, None, None]:
 SessionDepAnnotated = Annotated[Session, Depends(get_session)]
 
 
-def validate_unique_username(
-    session: SessionDepAnnotated, user_in: UserCreate | UserUpdate
-):
+def validate_unique_username(session: SessionDepAnnotated, user_in: User):
     if user_in.username:
         statement = select(User).where(User.username == user_in.username)
         user = session.exec(statement).first()
@@ -37,9 +35,7 @@ def validate_unique_username(
             )
 
 
-def validate_unique_email(
-    session: SessionDepAnnotated, user_in: UserCreate | UserUpdate
-):
+def validate_unique_email(session: SessionDepAnnotated, user_in: User):
     if user_in.email:
         statement = select(User).where(User.email == user_in.email)
         user = session.exec(statement).first()

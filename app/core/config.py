@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     ACCOUNTS_ROUTE_STR: str = "accounts"
     STOCKS_ROUTE_STR: str = "stocks"
 
-    USERNAME_MAX_LENGTH: int = 12
+    USERNAME_MAX_LENGTH: int = 30
 
     TEST_DATABASE_URL: str = "sqlite:///:memory:"
 
