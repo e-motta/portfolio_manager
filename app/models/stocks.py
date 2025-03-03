@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from uuid import UUID
 
 from sqlalchemy import DECIMAL, Column
 from sqlmodel import Field, Relationship, SQLModel
@@ -20,7 +21,7 @@ class Stock(BaseTableModel, StockBase, table=True):
     position: Decimal = Field(sa_column=Column(DECIMAL(14, 4)), default=0)
     average_price: Decimal = Field(sa_column=Column(DECIMAL(18, 8)), default=0)
 
-    account_id: int = Field(foreign_key="accounts.id")
+    account_id: UUID = Field(foreign_key="accounts.id")
     account: list["Account"] = Relationship(back_populates="stocks")  # type: ignore
 
 
@@ -32,7 +33,7 @@ class StockRead(StockBase):
     cost_basis: Decimal
     position: Decimal
     average_price: Decimal
-    id: int
+    id: UUID
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None

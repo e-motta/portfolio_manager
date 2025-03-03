@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from uuid import UUID
 
 from sqlalchemy import DECIMAL, Column
 from sqlmodel import Field, Relationship, SQLModel
@@ -16,7 +17,7 @@ class AccountBase(SQLModel):
 class Account(BaseTableModel, AccountBase, table=True):
     __tablename__: str = "accounts"
 
-    user_id: int = Field(foreign_key="users.id")
+    user_id: UUID = Field(foreign_key="users.id")
     user: "User" = Relationship(back_populates="accounts")  # type: ignore
     stocks: list[Stock] = Relationship(back_populates="account")
 
@@ -28,7 +29,7 @@ class AccountCreate(AccountBase):
 class AccountRead(AccountBase):
     user_id: int
     stocks: list[Stock]
-    id: int
+    id: UUID
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None

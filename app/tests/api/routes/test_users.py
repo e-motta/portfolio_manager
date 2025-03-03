@@ -3,8 +3,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
-from app.tests.utils import create_user
-from app.tests.utils import generate_random_string
+from app.tests.utils import create_user, generate_random_string
 
 
 def test_user_unauthorized(client: TestClient):
