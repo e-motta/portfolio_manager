@@ -25,7 +25,7 @@ class User(BaseTableModel, UserBase, table=True):
     __tablename__: str = "users"
 
     password_hash: str
-    accounts: list[Account] = Relationship(back_populates="user")
+    accounts: list[Account] = Relationship(back_populates="user", cascade_delete=True)
 
 
 class UserCreate(UserBase):

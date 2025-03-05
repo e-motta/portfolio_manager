@@ -200,3 +200,57 @@ def test_delete_stock(
         headers=token_headers,
     )
     assert r_get.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_stocks_deleted_when_account_deleted(
+    client: TestClient,
+    session: Session,
+    test_username: str,
+    test_password: str,
+    admin_token_headers: dict[str, str],
+):
+    user = create_user(session, username=test_username, password=test_password)
+    account = create_account(session, current_user=user)
+    stock = create_stock(session, account=account)
+
+    r_get = client.get(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/stocks/{stock.id}",
+        headers=admin_token_headers,
+    )
+    assert r_get.status_code == status.HTTP_200_OK
+
+    session.delete(account)
+    session.commit()
+
+    r_get_deleted = client.get(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/stocks/{stock.id}",
+        headers=admin_token_headers,
+    )
+    assert r_get_deleted.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_stocks_deleted_when_user_deleted(
+    client: TestClient,
+    session: Session,
+    test_username: str,
+    test_password: str,
+    admin_token_headers: dict[str, str],
+):
+    user = create_user(session, username=test_username, password=test_password)
+    account = create_account(session, current_user=user)
+    stock = create_stock(session, account=account)
+
+    r_get = client.get(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/stocks/{stock.id}",
+        headers=admin_token_headers,
+    )
+    assert r_get.status_code == status.HTTP_200_OK
+
+    session.delete(user)
+    session.commit()
+
+    r_get_deleted = client.get(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/stocks/{stock.id}",
+        headers=admin_token_headers,
+    )
+    assert r_get_deleted.status_code == status.HTTP_404_NOT_FOUND
