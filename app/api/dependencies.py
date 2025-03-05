@@ -1,5 +1,6 @@
 from collections.abc import Generator
 from typing import Annotated
+from uuid import UUID
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -14,17 +15,15 @@ from app.core.db import engine
 from app.models import Account, Stock, TokenData, User, UserCreate, UserUpdate
 
 
-def get_db() -> Generator[Session, None, None]:
+def get_session() -> Generator[Session, None, None]:
     with Session(engine) as session:
         yield session
 
 
-SessionDepAnnotated = Annotated[Session, Depends(get_db)]
+SessionDepAnnotated = Annotated[Session, Depends(get_session)]
 
 
-def validate_unique_username(
-    session: SessionDepAnnotated, user_in: UserCreate | UserUpdate
-):
+def validate_unique_username(session: SessionDepAnnotated, user_in: User):
     if user_in.username:
         statement = select(User).where(User.username == user_in.username)
         user = session.exec(statement).first()
@@ -37,9 +36,7 @@ def validate_unique_username(
             )
 
 
-def validate_unique_email(
-    session: SessionDepAnnotated, user_in: UserCreate | UserUpdate
-):
+def validate_unique_email(session: SessionDepAnnotated, user_in: User):
     if user_in.email:
         statement = select(User).where(User.email == user_in.email)
         user = session.exec(statement).first()
@@ -109,7 +106,7 @@ def is_admin(current_user: CurrentUserDepAnnotated):
 IsAdminDep = Depends(is_admin)
 
 
-def get_user_or_404(session: SessionDepAnnotated, user_id: int):
+def get_user_or_404(session: SessionDepAnnotated, user_id: int | UUID):
     user_db = crud.get_by_id(User, session, user_id)
     if not user_db:
         raise HTTPException(
@@ -118,7 +115,7 @@ def get_user_or_404(session: SessionDepAnnotated, user_id: int):
     return user_db
 
 
-def get_account_or_404(session: SessionDepAnnotated, account_id: int):
+def get_account_or_404(session: SessionDepAnnotated, account_id: int | UUID):
     account_db = crud.get_by_id(Account, session, account_id)
     if not account_db:
         raise HTTPException(
@@ -127,7 +124,7 @@ def get_account_or_404(session: SessionDepAnnotated, account_id: int):
     return account_db
 
 
-def get_stock_or_404(session: SessionDepAnnotated, stock_id: int):
+def get_stock_or_404(session: SessionDepAnnotated, stock_id: int | UUID):
     stock_db = crud.get_by_id(Stock, session, stock_id)
     if not stock_db:
         raise HTTPException(

@@ -1,20 +1,21 @@
 from datetime import datetime, timedelta, timezone
+from uuid import UUID
 
+import bcrypt
 import jwt
 from fastapi import HTTPException, status
-from passlib.context import CryptContext
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def verify_password(plain_password: str, hashed_password: str):
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(
+        plain_password.encode("utf-8"), hashed_password.encode("utf-8")
+    )
 
 
 def get_password_hash(password: str):
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
@@ -31,7 +32,9 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 
 def verify_ownership_or_403(
-    child_owner_id: int | str, owner_id: int | str, current_user_is_admin: bool = False
+    child_owner_id: int | UUID,
+    owner_id: int | UUID,
+    current_user_is_admin: bool = False,
 ):
     if current_user_is_admin:
         return

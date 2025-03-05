@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import EmailStr, Field, computed_field
 from sqlmodel import Relationship, SQLModel
@@ -24,7 +25,7 @@ class User(BaseTableModel, UserBase, table=True):
     __tablename__: str = "users"
 
     password_hash: str
-    accounts: list[Account] | None = Relationship(back_populates="user")
+    accounts: list[Account] = Relationship(back_populates="user")
 
 
 class UserCreate(UserBase):
@@ -34,7 +35,7 @@ class UserCreate(UserBase):
 
 
 class UserRead(UserBase):
-    id: int
+    id: UUID
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None

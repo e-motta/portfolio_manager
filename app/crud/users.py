@@ -8,13 +8,19 @@ from app.models.users import User, UserCreate, UserRegister, UserUpdate
 def fetch_all(session: Session):
     statement = select(User)
     users = session.exec(statement).all()
-    return users
+    count_statement = select(func.count()).select_from(User)
+    count = session.exec(count_statement).one()
+    return users, count
 
 
 def fetch_active(session: Session):
     statement = select(User).where(User.deleted_at == None)
     users = session.exec(statement).all()
-    return users
+    count_statement = (
+        select(func.count()).select_from(User).where(User.deleted_at == None)
+    )
+    count = session.exec(count_statement).one()
+    return users, count
 
 
 def create(session: Session, user_in: UserCreate):
