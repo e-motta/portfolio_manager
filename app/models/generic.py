@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
+from pydantic.generics import GenericModel
 from sqlalchemy import event
 from sqlalchemy.orm import Session
 from sqlmodel import Field, SQLModel
@@ -22,3 +23,22 @@ def auto_update_timestamp(session, flush_context, instances):
     for obj in session.dirty:
         if isinstance(obj, BaseTableModel):
             obj.updated_at = datetime.now(timezone.utc)
+
+
+class Meta(GenericModel):
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    count: int | None = Field(default=None)
+
+
+class ResponseBase(GenericModel):
+    message: str | None = Field(default=None)
+    data: None = Field(default=None)
+    meta: Meta = Field(default_factory=Meta)
+
+
+class ResponseSingle[T](ResponseBase):
+    data: T | None = Field(default=None)
+
+
+class ResponseMultiple[T](ResponseBase):
+    data: list[T] | None = Field(default=None)

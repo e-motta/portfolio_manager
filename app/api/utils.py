@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta, timezone
+from uuid import UUID
 
+import bcrypt
 import jwt
 from fastapi import HTTPException, status
-import bcrypt
 
 from app.core.config import settings
 
@@ -31,7 +32,9 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 
 def verify_ownership_or_403(
-    child_owner_id: int | str, owner_id: int | str, current_user_is_admin: bool = False
+    child_owner_id: int | UUID,
+    owner_id: int | UUID,
+    current_user_is_admin: bool = False,
 ):
     if current_user_is_admin:
         return

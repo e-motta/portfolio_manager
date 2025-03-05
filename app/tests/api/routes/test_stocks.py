@@ -107,7 +107,7 @@ def test_get_stock_list(
         headers=token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
-    data = r.json()
+    data = r.json()["data"]
     assert len(data) == 1
 
 
@@ -126,8 +126,8 @@ def test_get_stock_detail(
         headers=token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
-    data = r.json()
-    assert data["id"] == stock.id
+    data = r.json()["data"]
+    assert data["id"] == str(stock.id)
 
 
 def test_create_stock(
@@ -151,8 +151,8 @@ def test_create_stock(
         json=body,
     )
     assert r.status_code == status.HTTP_201_CREATED
-    data = r.json()
-    assert data["id"] == 1
+    data = r.json()["data"]
+    assert data["id"]
 
 
 def test_update_stock(
@@ -175,7 +175,7 @@ def test_update_stock(
         json=body,
     )
     assert r.status_code == status.HTTP_200_OK
-    data = r.json()
+    data = r.json()["data"]
     assert data["name"] == "updated_name"
 
 
@@ -193,7 +193,7 @@ def test_delete_stock(
         f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
         headers=token_headers,
     )
-    assert r_delete.status_code == status.HTTP_204_NO_CONTENT
+    assert r_delete.status_code == status.HTTP_200_OK
 
     r_get = client.get(
         f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",

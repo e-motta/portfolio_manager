@@ -37,7 +37,7 @@ class StockRead(StockBase):
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None
-    account_id: int
+    account_id: UUID
 
 
 class StockUpdate(SQLModel):

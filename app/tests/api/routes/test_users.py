@@ -62,18 +62,21 @@ def test_read_user_list(client: TestClient, admin_token_headers: dict[str, str])
         headers=admin_token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
-    data = r.json()
+    data = r.json()["data"]
     assert len(data) == 1
     assert "username" in data[0]
 
 
-def test_read_user_detail(client: TestClient, admin_token_headers: dict[str, str]):
+def test_read_user_detail(
+    client: TestClient, session: Session, admin_token_headers: dict[str, str]
+):
+    user = create_user(session)
     r = client.get(
-        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1",
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
         headers=admin_token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
-    data = r.json()
+    data = r.json()["data"]
     assert "username" in data
 
 
@@ -81,7 +84,7 @@ def test_read_user_detail_not_found(
     client: TestClient, admin_token_headers: dict[str, str]
 ):
     r = client.get(
-        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/99",
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/8559a27b62df400db8cd7b453482e242",
         headers=admin_token_headers,
     )
     assert r.status_code == status.HTTP_404_NOT_FOUND
@@ -101,7 +104,7 @@ def test_create_user(client: TestClient, admin_token_headers: dict[str, str]):
         json=body,
     )
     assert r.status_code == status.HTTP_201_CREATED
-    data = r.json()
+    data = r.json()["data"]
     assert data["username"] == "new_username"
 
 
@@ -220,7 +223,7 @@ def test_update_user(
         json=body,
     )
     assert r.status_code == status.HTTP_200_OK
-    data = r.json()
+    data = r.json()["data"]
     assert data["username"] == "new_username"
 
 
@@ -234,7 +237,7 @@ def test_hard_delete_user(
         headers=admin_token_headers,
         params={"hard_delete": True},
     )
-    assert r.status_code == status.HTTP_204_NO_CONTENT
+    assert r.status_code == status.HTTP_200_OK
 
     r = client.get(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
@@ -252,14 +255,14 @@ def test_soft_delete_user(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
         headers=admin_token_headers,
     )
-    assert r.status_code == status.HTTP_204_NO_CONTENT
+    assert r.status_code == status.HTTP_200_OK
 
     r = client.get(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
         headers=admin_token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
-    data = r.json()
+    data = r.json()["data"]
     assert data["is_active"] == False
     assert data["deleted_at"]
 
@@ -273,14 +276,14 @@ def test_recover_soft_deletion(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
         headers=admin_token_headers,
     )
-    assert r.status_code == status.HTTP_204_NO_CONTENT
+    assert r.status_code == status.HTTP_200_OK
 
     r = client.get(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
         headers=admin_token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
-    data = r.json()
+    data = r.json()["data"]
     assert not data["is_active"]
     assert data["deleted_at"]
 
@@ -289,7 +292,7 @@ def test_recover_soft_deletion(
         headers=admin_token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
-    data = r.json()
+    data = r.json()["data"]
     assert data["is_active"]
     assert not data["deleted_at"]
 
@@ -307,7 +310,7 @@ def test_register_user(client: TestClient):
         json=body,
     )
     assert r.status_code == status.HTTP_201_CREATED
-    data = r.json()
+    data = r.json()["data"]
     assert data["username"] == "new_username"
 
 
@@ -317,7 +320,7 @@ def test_read_user_me(client: TestClient, normal_user_token_headers: dict[str, s
         headers=normal_user_token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
-    data = r.json()
+    data = r.json()["data"]
     assert "username" in data
 
 
@@ -329,7 +332,7 @@ def test_update_user_me(client: TestClient, normal_user_token_headers: dict[str,
         json=body,
     )
     assert r.status_code == status.HTTP_200_OK
-    data = r.json()
+    data = r.json()["data"]
     assert data["username"] == "new_username"
 
 

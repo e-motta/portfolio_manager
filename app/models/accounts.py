@@ -27,7 +27,7 @@ class AccountCreate(AccountBase):
 
 
 class AccountRead(AccountBase):
-    user_id: int
+    user_id: UUID
     stocks: list[Stock]
     id: UUID
     created_at: datetime

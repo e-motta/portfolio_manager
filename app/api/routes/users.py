@@ -10,6 +10,7 @@ from app.api.dependencies import (
     validate_unique_username,
 )
 from app.core.config import settings
+from app.models.generic import Meta, ResponseMultiple, ResponseSingle
 from app.models.users import User, UserCreate, UserRead, UserRegister, UserUpdate
 
 router = APIRouter(
@@ -20,7 +21,7 @@ router = APIRouter(
 # Open
 @router.post(
     "/register",
-    response_model=UserRead,
+    response_model=ResponseSingle[UserRead],
     status_code=status.HTTP_201_CREATED,
     dependencies=[
         Depends(validate_unique_email),
@@ -29,18 +30,18 @@ router = APIRouter(
 )
 def register_user(session: SessionDepAnnotated, user_in: UserRegister):
     user = crud.users.register(session, user_in)
-    return user
+    return ResponseSingle(data=user, message="User created successfully")
 
 
 # Logged-in user
-@router.get("/me", response_model=UserRead)
+@router.get("/me", response_model=ResponseSingle[UserRead])
 def read_user_me(current_user: CurrentUserDepAnnotated):
-    return current_user
+    return ResponseSingle(data=current_user)
 
 
 @router.patch(
     "/me",
-    response_model=UserRead,
+    response_model=ResponseSingle[UserRead],
     dependencies=[
         Depends(validate_unique_email),
         Depends(validate_unique_username),
@@ -52,31 +53,32 @@ def update_user_me(
     user_in: UserUpdate,
 ):
     crud.users.update(session, current_user, user_in)
-    return current_user
+    return ResponseSingle(data=current_user, message="User updated sucessfully")
 
 
 # Admin
-@router.get("/", response_model=list[UserRead], dependencies=[IsAdminDep])
+@router.get("/", response_model=ResponseMultiple[UserRead], dependencies=[IsAdminDep])
 def read_user_list(session: SessionDepAnnotated, include_deleted: bool = False):
     if include_deleted:
-        users = crud.users.fetch_all(session)
+
+        users, count = crud.users.fetch_all(session)
     else:
-        users = crud.users.fetch_active(session)
-    return users
+        users, count = crud.users.fetch_active(session)
+    return ResponseMultiple(data=users, meta=Meta(count=count))
 
 
 @router.get(
     "/{user_id}",
-    response_model=UserRead,
+    response_model=ResponseSingle[UserRead],
     dependencies=[IsAdminDep],
 )
 def read_user_detail(user_db: User = Depends(get_user_or_404)):
-    return user_db
+    return ResponseSingle(data=user_db)
 
 
 @router.post(
     "/",
-    response_model=UserRead,
+    response_model=ResponseSingle[UserRead],
     status_code=status.HTTP_201_CREATED,
     dependencies=[
         IsAdminDep,
@@ -86,12 +88,12 @@ def read_user_detail(user_db: User = Depends(get_user_or_404)):
 )
 def create_user(session: SessionDepAnnotated, user_in: UserCreate):
     user = crud.users.create(session, user_in)
-    return user
+    return ResponseSingle(data=user, message="User created successfully")
 
 
 @router.patch(
     "/{user_id}",
-    response_model=UserRead,
+    response_model=ResponseSingle[UserRead],
     dependencies=[
         IsAdminDep,
         Depends(validate_unique_email),
@@ -104,11 +106,14 @@ def update_user(
     user_db: User = Depends(get_user_or_404),
 ):
     crud.users.update(session, user_db, user_in)
-    return user_db
+    return ResponseSingle(data=user_db, message="User updated successfully")
 
 
 @router.delete(
-    "/{user_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[IsAdminDep]
+    "/{user_id}",
+    response_model=ResponseSingle[None],
+    status_code=status.HTTP_200_OK,
+    dependencies=[IsAdminDep],
 )
 def delete_user(
     session: SessionDepAnnotated,
@@ -120,10 +125,14 @@ def delete_user(
     else:
         crud.users.soft_delete(session, user_db)
 
-    return {"ok": True}
+    return ResponseSingle(message="User deleted successfully")
 
 
-@router.patch("/{user_id}/recover", dependencies=[IsAdminDep], response_model=UserRead)
+@router.patch(
+    "/{user_id}/recover",
+    response_model=ResponseSingle[UserRead],
+    dependencies=[IsAdminDep],
+)
 def recover_soft_deletion(
     session: SessionDepAnnotated,
     user_db: User = Depends(get_user_or_404),
@@ -134,4 +143,4 @@ def recover_soft_deletion(
         )
 
     crud.users.recover(session, user_db)
-    return user_db
+    return ResponseSingle(data=user_db, message="User recovered successfully")
