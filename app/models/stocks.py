@@ -21,7 +21,7 @@ class Stock(BaseTableModel, StockBase, table=True):
     position: Decimal = Field(sa_column=Column(DECIMAL(14, 4)), default=0)
     average_price: Decimal = Field(sa_column=Column(DECIMAL(18, 8)), default=0)
 
-    account_id: UUID = Field(foreign_key="accounts.id")
+    account_id: UUID = Field(foreign_key="accounts.id", ondelete="CASCADE")
     account: list["Account"] = Relationship(back_populates="stocks")  # type: ignore
 
 

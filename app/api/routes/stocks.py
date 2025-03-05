@@ -12,7 +12,6 @@ from app.core.config import settings
 from app.models import Account, Stock, StockCreate, StockRead, StockUpdate
 from app.models.generic import Meta, ResponseMultiple, ResponseSingle
 
-
 router = APIRouter(
     prefix=f"/{settings.ACCOUNTS_ROUTE_STR}/{{account_id}}/{settings.STOCKS_ROUTE_STR}",
     tags=[settings.STOCKS_ROUTE_STR],
