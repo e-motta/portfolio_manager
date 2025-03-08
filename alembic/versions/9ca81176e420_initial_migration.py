@@ -1,8 +1,8 @@
 """initial migration
 
-Revision ID: ff178bcd3690
-Revises: 
-Create Date: 2025-03-03 08:23:41.970121
+Revision ID: 9ca81176e420
+Revises:
+Create Date: 2025-03-07 08:17:43.599850
 
 """
 
@@ -14,7 +14,7 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision: str = "ff178bcd3690"
+revision: str = "9ca81176e420"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -45,10 +45,7 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.Column("deleted_at", sa.DateTime(), nullable=True),
         sa.Column("user_id", sa.Uuid(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["users.id"],
-        ),
+        sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
@@ -66,10 +63,7 @@ def upgrade() -> None:
         sa.Column("position", sa.DECIMAL(precision=14, scale=4), nullable=True),
         sa.Column("average_price", sa.DECIMAL(precision=18, scale=8), nullable=True),
         sa.Column("account_id", sa.Uuid(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["account_id"],
-            ["accounts.id"],
-        ),
+        sa.ForeignKeyConstraint(["account_id"], ["accounts.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
     # ### end Alembic commands ###
