@@ -1,7 +1,7 @@
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID, uuid4
-from collections.abc import Sequence
 
 from pydantic import BaseModel
 from sqlalchemy import event

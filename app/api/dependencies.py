@@ -7,6 +7,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
 from sqlmodel import Session, select
+from sqlalchemy.sql import func
 
 from app import crud
 from app.api.utils import verify_password
@@ -26,7 +27,9 @@ SessionDepAnnotated = Annotated[Session, Depends(get_session)]
 
 def validate_unique_username(session: SessionDepAnnotated, user_in: User):
     if user_in.username:
-        statement = select(User).where(User.username == user_in.username)
+        statement = select(User).where(
+            func.lower(User.username) == func.lower(user_in.username)
+        )
         user = session.exec(statement).first()
         if user:
             raise (
@@ -43,7 +46,9 @@ def validate_unique_username(session: SessionDepAnnotated, user_in: User):
 
 def validate_unique_email(session: SessionDepAnnotated, user_in: User):
     if user_in.email:
-        statement = select(User).where(User.email == user_in.email)
+        statement = select(User).where(
+            func.lower(User.email) == func.lower(user_in.email)
+        )
         user = session.exec(statement).first()
         if user:
             raise (
