@@ -60,7 +60,6 @@ def update_user_me(
 @router.get("/", response_model=ResponseMultiple[UserRead], dependencies=[IsAdminDep])
 def read_user_list(session: SessionDepAnnotated, include_deleted: bool = False):
     if include_deleted:
-
         users, count = crud.users.fetch_all(session)
     else:
         users, count = crud.users.fetch_active(session)
