@@ -27,6 +27,24 @@ router = APIRouter(
         Depends(validate_unique_email),
         Depends(validate_unique_username),
     ],
+    responses={
+        status.HTTP_409_CONFLICT: {
+            "description": "Conflict - Username or Email already in use",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": [
+                            {
+                                "loc": ["string", 0],
+                                "msg": "string",
+                                "type": "string",
+                            }
+                        ]
+                    }
+                }
+            },
+        }
+    },
 )
 def register_user(session: SessionDepAnnotated, user_in: UserRegister):
     user = crud.users.register(session, user_in)
@@ -46,6 +64,24 @@ def read_user_me(current_user: CurrentUserDepAnnotated):
         Depends(validate_unique_email),
         Depends(validate_unique_username),
     ],
+    responses={
+        status.HTTP_409_CONFLICT: {
+            "description": "Conflict - Username or Email already in use",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": [
+                            {
+                                "loc": ["string", 0],
+                                "msg": "string",
+                                "type": "string",
+                            }
+                        ]
+                    }
+                }
+            },
+        }
+    },
 )
 def update_user_me(
     session: SessionDepAnnotated,
@@ -84,6 +120,24 @@ def read_user_detail(user_db: User = Depends(get_user_or_404)):
         Depends(validate_unique_email),
         Depends(validate_unique_username),
     ],
+    responses={
+        status.HTTP_409_CONFLICT: {
+            "description": "Conflict - Username or Email already in use",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": [
+                            {
+                                "loc": ["string", 0],
+                                "msg": "string",
+                                "type": "string",
+                            }
+                        ]
+                    }
+                }
+            },
+        }
+    },
 )
 def create_user(session: SessionDepAnnotated, user_in: UserCreate):
     user = crud.users.create(session, user_in)

@@ -3,7 +3,11 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
-from app.tests.utils import create_user, generate_random_string
+from app.tests.utils import (
+    create_user,
+    generate_random_password,
+    generate_random_string,
+)
 
 
 def test_user_unauthorized(client: TestClient):
@@ -96,7 +100,7 @@ def test_create_user(client: TestClient, admin_token_headers: dict[str, str]):
         "email": "new_email@example.com",
         "first_name": "first",
         "last_name": "last",
-        "password": "password",
+        "password": generate_random_password(),
     }
     r = client.post(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
@@ -108,6 +112,24 @@ def test_create_user(client: TestClient, admin_token_headers: dict[str, str]):
     assert data["username"] == "new_username"
 
 
+def test_create_user_invalid_password(
+    client: TestClient, admin_token_headers: dict[str, str]
+):
+    body = {
+        "username": "new_username",
+        "email": "new_email@example.com",
+        "first_name": "first",
+        "last_name": "last",
+        "password": "invalid",
+    }
+    r = client.post(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
+        headers=admin_token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
 def test_create_user_username_too_long(
     client: TestClient, admin_token_headers: dict[str, str]
 ):
@@ -116,7 +138,7 @@ def test_create_user_username_too_long(
         "email": "new_email@example.com",
         "first_name": "first",
         "last_name": "last",
-        "password": "password",
+        "password": generate_random_password(),
     }
     r = client.post(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
@@ -139,7 +161,7 @@ def test_create_user_username_already_in_use(
         "email": "new_email@example.com",
         "first_name": "first",
         "last_name": "last",
-        "password": "password",
+        "password": generate_random_password(),
     }
     r = client.post(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
@@ -148,7 +170,7 @@ def test_create_user_username_already_in_use(
     )
     assert r.status_code == status.HTTP_409_CONFLICT
     data = r.json()
-    assert data["detail"] == "Username already in use"
+    assert data["detail"]["type"] == "username_in_use"
 
 
 def test_create_user_email_already_in_use(
@@ -162,7 +184,7 @@ def test_create_user_email_already_in_use(
         "email": email,
         "first_name": "first",
         "last_name": "last",
-        "password": "password",
+        "password": generate_random_password(),
     }
     r = client.post(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
@@ -171,7 +193,7 @@ def test_create_user_email_already_in_use(
     )
     assert r.status_code == status.HTTP_409_CONFLICT
     data = r.json()
-    assert data["detail"] == "Email already in use"
+    assert data["detail"]["type"] == "email_in_use"
 
 
 def test_create_user_email_validation(
@@ -182,7 +204,7 @@ def test_create_user_email_validation(
         "email": "invalid_email",
         "first_name": "first",
         "last_name": "last",
-        "password": "password",
+        "password": generate_random_password(),
     }
     r_invalid = client.post(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
@@ -196,11 +218,128 @@ def test_create_user_email_validation(
         "email": "valid_email@example.com",
         "first_name": "first",
         "last_name": "last",
-        "password": "password",
+        "password": generate_random_password(),
     }
     r_valid = client.post(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
         headers=admin_token_headers,
+        json=body_valid,
+    )
+    assert r_valid.status_code == status.HTTP_201_CREATED
+
+
+def test_register_user(client: TestClient):
+    body = {
+        "username": "new_username",
+        "email": "new_email@example.com",
+        "first_name": "first",
+        "last_name": "last",
+        "password": generate_random_password(),
+    }
+    r = client.post(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/register",
+        json=body,
+    )
+    assert r.status_code == status.HTTP_201_CREATED
+    data = r.json()["data"]
+    assert data["username"] == "new_username"
+
+
+def test_register_user_invalid_password(client: TestClient):
+    body = {
+        "username": "new_username",
+        "email": "new_email@example.com",
+        "first_name": "first",
+        "last_name": "last",
+        "password": "invalid",
+    }
+    r = client.post(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/register",
+        json=body,
+    )
+    assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+def test_register_user_username_too_long(client: TestClient):
+    body = {
+        "username": generate_random_string(settings.USERNAME_MAX_LENGTH + 1),
+        "email": "new_email@example.com",
+        "first_name": "first",
+        "last_name": "last",
+        "password": generate_random_password(),
+    }
+    r = client.post(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/register",
+        json=body,
+    )
+    assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    data = r.json()
+    assert data["detail"][0]["type"] == "string_too_long"
+
+
+def test_register_user_username_already_in_use(client: TestClient, session: Session):
+    username = "used_username"
+    create_user(session, username=username)
+
+    body = {
+        "username": username,
+        "email": "new_email@example.com",
+        "first_name": "first",
+        "last_name": "last",
+        "password": generate_random_password(),
+    }
+    r = client.post(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/register",
+        json=body,
+    )
+    assert r.status_code == status.HTTP_409_CONFLICT
+    data = r.json()
+    assert data["detail"]["type"] == "username_in_use"
+
+
+def test_register_user_email_already_in_use(client: TestClient, session: Session):
+    email = "used_email@example.com"
+    create_user(session, email=email)
+
+    body = {
+        "username": "username",
+        "email": email,
+        "first_name": "first",
+        "last_name": "last",
+        "password": generate_random_password(),
+    }
+    r = client.post(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/register",
+        json=body,
+    )
+    assert r.status_code == status.HTTP_409_CONFLICT
+    data = r.json()
+    assert data["detail"]["type"] == "email_in_use"
+
+
+def test_register_user_email_validation(client: TestClient):
+    body_invalid = {
+        "username": "username",
+        "email": "invalid_email",
+        "first_name": "first",
+        "last_name": "last",
+        "password": generate_random_password(),
+    }
+    r_invalid = client.post(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/register",
+        json=body_invalid,
+    )
+    assert r_invalid.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    body_valid = {
+        "username": "username",
+        "email": "valid_email@example.com",
+        "first_name": "first",
+        "last_name": "last",
+        "password": generate_random_password(),
+    }
+    r_valid = client.post(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/register",
         json=body_valid,
     )
     assert r_valid.status_code == status.HTTP_201_CREATED
@@ -213,7 +352,7 @@ def test_update_user(
         session=session,
         username="username",
         email="email@example.com",
-        password="password",
+        password=generate_random_password(),
     )
 
     body = {"username": "new_username"}
@@ -295,23 +434,6 @@ def test_recover_soft_deletion(
     data = r.json()["data"]
     assert data["is_active"]
     assert not data["deleted_at"]
-
-
-def test_register_user(client: TestClient):
-    body = {
-        "username": "new_username",
-        "email": "new_email@example.com",
-        "first_name": "first",
-        "last_name": "last",
-        "password": "password",
-    }
-    r = client.post(
-        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/register",
-        json=body,
-    )
-    assert r.status_code == status.HTTP_201_CREATED
-    data = r.json()["data"]
-    assert data["username"] == "new_username"
 
 
 def test_read_user_me(client: TestClient, normal_user_token_headers: dict[str, str]):

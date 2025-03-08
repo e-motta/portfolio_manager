@@ -1,12 +1,14 @@
 from datetime import datetime
+from typing import Annotated
 from uuid import UUID
 
-from pydantic import EmailStr, Field, computed_field
-from sqlmodel import Relationship, SQLModel
+from pydantic import AfterValidator, EmailStr, computed_field
+from sqlmodel import Field, Relationship, SQLModel
 
 from app.core.config import settings
 from app.models.accounts import Account
 from app.models.generic import BaseTableModel
+from app.utils import validate_password
 
 
 class UserBase(SQLModel):
@@ -31,7 +33,7 @@ class User(BaseTableModel, UserBase, table=True):
 class UserCreate(UserBase):
     username: str = Field(max_length=settings.USERNAME_MAX_LENGTH)
     email: EmailStr
-    password: str
+    password: Annotated[str, AfterValidator(validate_password)]
 
 
 class UserRead(UserBase):
@@ -51,7 +53,7 @@ class UserRegister(SQLModel):
     email: EmailStr
     first_name: str
     last_name: str
-    password: str
+    password: Annotated[str, AfterValidator(validate_password)]
 
 
 class UserUpdate(SQLModel):

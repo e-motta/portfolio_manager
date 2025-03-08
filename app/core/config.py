@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     TEST_DATABASE_URL: str = "sqlite:///:memory:"
 
     FIRST_SUPERUSER_USERNAME: str = "admin"
-    FIRST_SUPERUSER_PASSWORD: str = "admin"
+    FIRST_SUPERUSER_PASSWORD: str = "Admin12@"
     FIRST_SUPERUSER_EMAIL: str = "admin@example.com"
     FIRST_SUPERUSER_FIRST_NAME: str = "First"
     FIRST_SUPERUSER_LAST_NAME: str = "Superuser"
