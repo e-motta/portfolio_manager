@@ -38,8 +38,7 @@ class User(BaseTableModel, UserBase, table=True):
 class UserCreate(UserBase):
     username: str = Field(max_length=settings.USERNAME_MAX_LENGTH, unique=True)
     email: EmailStr
-    # password: Annotated[str, AfterValidator(validate_password)]
-    password: str
+    password: Annotated[str, AfterValidator(validate_password)]
 
 
 class UserRead(UserBase):
@@ -59,7 +58,7 @@ class UserRegister(SQLModel):
     email: EmailStr
     first_name: str
     last_name: str
-    password: str
+    password: Annotated[str, AfterValidator(validate_password)]
 
 
 class UserUpdate(SQLModel):

@@ -24,8 +24,8 @@ router = APIRouter(
     response_model=ResponseSingle[UserRead],
     status_code=status.HTTP_201_CREATED,
     dependencies=[
-        # Depends(validate_unique_email),
-        # Depends(validate_unique_username),
+        Depends(validate_unique_email),
+        Depends(validate_unique_username),
     ],
     responses={
         status.HTTP_409_CONFLICT: {
