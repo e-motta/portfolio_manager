@@ -10,12 +10,37 @@ from app.core.config import settings
 from app.models import Account, AccountCreate, Stock, StockCreate, User, UserCreate
 
 
+def generate_random_string(length: int = 10):
+    return "".join(random.choices(string.ascii_letters + string.digits, k=length))
+
+
+def generate_random_password(length: int = 10):
+    lowercase_letters = string.ascii_lowercase
+    uppercase_letters = string.ascii_uppercase
+    digits = string.digits
+    special_characters = '!@#$%^&*(),.?":{}|<>'
+
+    password = [
+        random.choice(lowercase_letters),
+        random.choice(uppercase_letters),
+        random.choice(digits),
+        random.choice(special_characters),
+    ]
+
+    all_characters = lowercase_letters + uppercase_letters + digits + special_characters
+    password += random.choices(all_characters, k=length - len(password))
+
+    random.shuffle(password)
+
+    return "".join(password)
+
+
 def create_user(
     session: Session,
     *,
     username: str = "username",
     email: str = "email@example.com",
-    password: str = "password",
+    password: str = generate_random_password(),
     is_admin: bool = False,
 ) -> User:
     user_in = UserCreate(
@@ -75,7 +100,3 @@ def get_token_headers(
     auth_token = response["access_token"]
     headers = {"Authorization": f"Bearer {auth_token}"}
     return headers
-
-
-def generate_random_string(length: int = 10):
-    return "".join(random.choices(string.ascii_letters + string.digits, k=length))

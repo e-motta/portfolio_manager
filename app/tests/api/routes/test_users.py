@@ -3,7 +3,11 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
-from app.tests.utils import create_user, generate_random_string
+from app.tests.utils import (
+    create_user,
+    generate_random_password,
+    generate_random_string,
+)
 
 
 def test_user_unauthorized(client: TestClient):
@@ -96,7 +100,7 @@ def test_create_user(client: TestClient, admin_token_headers: dict[str, str]):
         "email": "new_email@example.com",
         "first_name": "first",
         "last_name": "last",
-        "password": "password",
+        "password": generate_random_password(),
     }
     r = client.post(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
@@ -116,7 +120,7 @@ def test_create_user_username_too_long(
         "email": "new_email@example.com",
         "first_name": "first",
         "last_name": "last",
-        "password": "password",
+        "password": generate_random_password(),
     }
     r = client.post(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
@@ -139,7 +143,7 @@ def test_create_user_username_already_in_use(
         "email": "new_email@example.com",
         "first_name": "first",
         "last_name": "last",
-        "password": "password",
+        "password": generate_random_password(),
     }
     r = client.post(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
@@ -148,7 +152,7 @@ def test_create_user_username_already_in_use(
     )
     assert r.status_code == status.HTTP_409_CONFLICT
     data = r.json()
-    assert data["detail"] == "Username already in use"
+    assert data["detail"]["type"] == "username_in_use"
 
 
 def test_create_user_email_already_in_use(
@@ -162,7 +166,7 @@ def test_create_user_email_already_in_use(
         "email": email,
         "first_name": "first",
         "last_name": "last",
-        "password": "password",
+        "password": generate_random_password(),
     }
     r = client.post(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
@@ -171,7 +175,7 @@ def test_create_user_email_already_in_use(
     )
     assert r.status_code == status.HTTP_409_CONFLICT
     data = r.json()
-    assert data["detail"] == "Email already in use"
+    assert data["detail"]["type"] == "email_in_use"
 
 
 def test_create_user_email_validation(
@@ -182,7 +186,7 @@ def test_create_user_email_validation(
         "email": "invalid_email",
         "first_name": "first",
         "last_name": "last",
-        "password": "password",
+        "password": generate_random_password(),
     }
     r_invalid = client.post(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
@@ -196,7 +200,7 @@ def test_create_user_email_validation(
         "email": "valid_email@example.com",
         "first_name": "first",
         "last_name": "last",
-        "password": "password",
+        "password": generate_random_password(),
     }
     r_valid = client.post(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
@@ -213,7 +217,7 @@ def test_update_user(
         session=session,
         username="username",
         email="email@example.com",
-        password="password",
+        password=generate_random_password(),
     )
 
     body = {"username": "new_username"}
@@ -303,7 +307,7 @@ def test_register_user(client: TestClient):
         "email": "new_email@example.com",
         "first_name": "first",
         "last_name": "last",
-        "password": "password",
+        "password": generate_random_password(),
     }
     r = client.post(
         f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/register",

@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Any
 from uuid import UUID, uuid4
 from collections.abc import Sequence
 
@@ -43,3 +44,11 @@ class ResponseSingle[T](ResponseBase):
 
 class ResponseMultiple[T](ResponseBase):
     data: Sequence[T] | None = Field(default=None)
+
+
+class DetailItem(SQLModel):
+    type: str
+    loc: list[str | int]
+    msg: str
+    input: str | None = None
+    ctx: dict[str, Any] | None = None

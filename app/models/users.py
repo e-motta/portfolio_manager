@@ -1,15 +1,19 @@
 from datetime import datetime
+from typing import Annotated
 from uuid import UUID
 
-from pydantic import EmailStr, Field, computed_field
-from sqlmodel import Relationship, SQLModel
+from pydantic import AfterValidator, EmailStr, computed_field
+from sqlmodel import Relationship, SQLModel, Field, UniqueConstraint, text
+from sqlalchemy import Index, func
 
 from app.core.config import settings
 from app.models.accounts import Account
 from app.models.generic import BaseTableModel
+from app.utils import validate_password
 
 
 class UserBase(SQLModel):
+
     username: str
     email: str
     first_name: str
@@ -28,9 +32,13 @@ class User(BaseTableModel, UserBase, table=True):
     accounts: list[Account] = Relationship(back_populates="user", cascade_delete=True)
 
 
+# Index("ix_user_username_lower", text("lower(user.username)"), unique=True)
+
+
 class UserCreate(UserBase):
-    username: str = Field(max_length=settings.USERNAME_MAX_LENGTH)
+    username: str = Field(max_length=settings.USERNAME_MAX_LENGTH, unique=True)
     email: EmailStr
+    # password: Annotated[str, AfterValidator(validate_password)]
     password: str
 
 
