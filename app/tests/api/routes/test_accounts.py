@@ -112,6 +112,26 @@ def test_create_account(
     assert data_get["id"] == data_post["id"]
 
 
+def test_create_account_negative_buying_power(
+    client: TestClient, session: Session, test_username: str, test_password: str
+):
+    create_user(session, username=test_username, password=test_password)
+    token_headers = get_token_headers(
+        client, username=test_username, password=test_password
+    )
+
+    body = {
+        "name": "account_name",
+        "buying_power": -1,
+    }
+    r_post = client.post(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/",
+        headers=token_headers,
+        json=body,
+    )
+    assert r_post.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
 def test_update_account(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
@@ -133,6 +153,27 @@ def test_update_account(
     assert r.status_code == status.HTTP_200_OK
     data = r.json()["data"]
     assert data["name"] == "new_account_name"
+
+
+def test_update_account_negative_buying_power(
+    client: TestClient, session: Session, test_username: str, test_password: str
+):
+    user = create_user(session, username=test_username, password=test_password)
+    account = create_account(session, current_user=user)
+    token_headers = get_token_headers(
+        client=client, username=test_username, password=test_password
+    )
+
+    body = {
+        "buying_power": -1,
+    }
+
+    r = client.patch(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}",
+        headers=token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 def test_delete_account(
@@ -181,6 +222,3 @@ def test_account_deleted_when_user_deleted(
         headers=admin_token_headers,
     )
     assert r_get_deleted.status_code == status.HTTP_404_NOT_FOUND
-
-
-# todo: implement/test that related stocks are deleted (cascade)

@@ -4,6 +4,7 @@ from sqlmodel import Session
 
 from app.core.config import settings
 from app.tests.utils import (
+    create_account,
     create_user,
     generate_random_password,
     generate_random_string,
@@ -366,6 +367,121 @@ def test_update_user(
     assert data["username"] == "new_username"
 
 
+def test_update_user_invalid_password(
+    session: Session, client: TestClient, admin_token_headers: dict[str, str]
+):
+    user = create_user(
+        session=session,
+        username="username",
+        email="email@example.com",
+        password=generate_random_password(),
+    )
+    body = {
+        "password": "invalid",
+    }
+    r = client.patch(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
+        headers=admin_token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+def test_update_user_username_too_long(
+    session: Session, client: TestClient, admin_token_headers: dict[str, str]
+):
+    user = create_user(
+        session=session,
+        username="username",
+        email="email@example.com",
+        password=generate_random_password(),
+    )
+    body = {"username": generate_random_string(settings.USERNAME_MAX_LENGTH + 1)}
+    r = client.patch(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
+        headers=admin_token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    data = r.json()
+    assert data["detail"][0]["type"] == "string_too_long"
+
+
+def test_update_user_username_already_in_use(
+    session: Session, client: TestClient, admin_token_headers: dict[str, str]
+):
+    used_username = "used_username"
+    create_user(session, username=used_username)
+
+    user = create_user(
+        session=session,
+        username="username",
+        email="email@example.com",
+        password=generate_random_password(),
+    )
+
+    body = {"username": used_username}
+    r = client.patch(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
+        headers=admin_token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_409_CONFLICT
+    data = r.json()
+    assert data["detail"]["type"] == "username_in_use"
+
+
+def test_update_user_email_already_in_use(
+    session: Session, client: TestClient, admin_token_headers: dict[str, str]
+):
+    used_email = "used_email@example.com"
+    create_user(session, email=used_email)
+
+    user = create_user(
+        session=session,
+        username="username",
+        email="email@example.com",
+        password=generate_random_password(),
+    )
+
+    body = {"email": used_email}
+    r = client.patch(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
+        headers=admin_token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_409_CONFLICT
+    data = r.json()
+    assert data["detail"]["type"] == "email_in_use"
+
+
+def test_update_user_email_validation(
+    session: Session, client: TestClient, admin_token_headers: dict[str, str]
+):
+    user = create_user(
+        session=session,
+        username="username",
+        email="email@example.com",
+        password=generate_random_password(),
+    )
+
+    body_invalid = {"email": "invalid_email"}
+    r_invalid = client.patch(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
+        headers=admin_token_headers,
+        json=body_invalid,
+    )
+    assert r_invalid.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    body_valid = {"email": "valid_email@example.com"}
+    r_valid = client.patch(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/{user.id}",
+        headers=admin_token_headers,
+        json=body_valid,
+    )
+    assert r_valid.status_code == status.HTTP_200_OK
+
+
 def test_hard_delete_user(
     client: TestClient, session: Session, admin_token_headers: dict[str, str]
 ):
@@ -458,4 +574,81 @@ def test_update_user_me(client: TestClient, normal_user_token_headers: dict[str,
     assert data["username"] == "new_username"
 
 
-# todo: implement that related accounts are deleted (cascade)
+def test_update_user_me_invalid_password(
+    client: TestClient, normal_user_token_headers: dict[str, str]
+):
+    body = {"password": "invalid"}
+    r = client.patch(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/me",
+        headers=normal_user_token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+def test_update_user_me_username_too_long(
+    client: TestClient, normal_user_token_headers: dict[str, str]
+):
+    body = {"username": generate_random_string(settings.USERNAME_MAX_LENGTH + 1)}
+    r = client.patch(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/me",
+        headers=normal_user_token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    data = r.json()
+    assert data["detail"][0]["type"] == "string_too_long"
+
+
+def test_update_user_me_username_already_in_use(
+    session: Session, client: TestClient, normal_user_token_headers: dict[str, str]
+):
+    used_username = "used_username"
+    create_user(session, username=used_username)
+
+    body = {"username": used_username}
+    r = client.patch(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/me",
+        headers=normal_user_token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_409_CONFLICT
+    data = r.json()
+    assert data["detail"]["type"] == "username_in_use"
+
+
+def test_update_user_me_email_already_in_use(
+    session: Session, client: TestClient, normal_user_token_headers: dict[str, str]
+):
+    used_email = "used_email@example.com"
+    create_user(session, email=used_email)
+
+    body = {"email": used_email}
+    r = client.patch(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/me",
+        headers=normal_user_token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_409_CONFLICT
+    data = r.json()
+    assert data["detail"]["type"] == "email_in_use"
+
+
+def test_update_user_me_email_validation(
+    client: TestClient, normal_user_token_headers: dict[str, str]
+):
+    body_invalid = {"email": "invalid_email"}
+    r_invalid = client.patch(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/me",
+        headers=normal_user_token_headers,
+        json=body_invalid,
+    )
+    assert r_invalid.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    body_valid = {"email": "valid_email@example.com"}
+    r_valid = client.patch(
+        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/me",
+        headers=normal_user_token_headers,
+        json=body_valid,
+    )
+    assert r_valid.status_code == status.HTTP_200_OK
