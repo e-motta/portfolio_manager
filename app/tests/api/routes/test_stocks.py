@@ -155,6 +155,29 @@ def test_create_stock(
     assert data["id"]
 
 
+def test_create_stock_negative_target_allocation(
+    client: TestClient, session: Session, test_username: str, test_password: str
+):
+    user = create_user(session, username=test_username, password=test_password)
+    account = create_account(session, current_user=user)
+    token_headers = get_token_headers(
+        client=client, username=test_username, password=test_password
+    )
+
+    body = {
+        "name": "new_name",
+        "symbol": "NEW",
+        "target_allocation": -1,
+    }
+
+    r = client.post(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/",
+        headers=token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
 def test_update_stock(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
@@ -177,6 +200,28 @@ def test_update_stock(
     assert r.status_code == status.HTTP_200_OK
     data = r.json()["data"]
     assert data["name"] == "updated_name"
+
+
+def test_update_stock_negative_target_allocation(
+    client: TestClient, session: Session, test_username: str, test_password: str
+):
+    user = create_user(session, username=test_username, password=test_password)
+    account = create_account(session, current_user=user)
+    stock = create_stock(session, account=account)
+    token_headers = get_token_headers(
+        client=client, username=test_username, password=test_password
+    )
+
+    body = {
+        "target_allocation": -1,
+    }
+
+    r = client.patch(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        headers=token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 def test_delete_stock(

@@ -11,7 +11,7 @@ from app.models.stocks import Stock
 
 class AccountBase(SQLModel):
     name: str
-    buying_power: Decimal = Field(sa_column=Column(DECIMAL(12, 2)))
+    buying_power: Decimal = Field(sa_column=Column(DECIMAL(12, 2)), ge=0)
 
 
 class Account(BaseTableModel, AccountBase, table=True):
@@ -37,4 +37,6 @@ class AccountRead(AccountBase):
 
 class AccountUpdate(SQLModel):
     name: str | None = None
-    buying_power: Decimal | None = Field(sa_column=Column(DECIMAL(12, 2)), default=None)
+    buying_power: Decimal | None = Field(
+        sa_column=Column(DECIMAL(12, 2)), default=None, ge=0
+    )

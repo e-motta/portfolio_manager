@@ -61,5 +61,5 @@ class UserUpdate(SQLModel):
     email: EmailStr | None = None
     first_name: str | None = None
     last_name: str | None = None
-    password: str | None = None
+    password: Annotated[str, AfterValidator(validate_password)] | None = None
     is_admin: bool = False
