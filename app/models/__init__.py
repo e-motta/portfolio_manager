@@ -7,7 +7,22 @@ from app.models.accounts import (
 )
 from app.models.auth import Token, TokenData
 from app.models.generic import BaseTableModel, SQLModel
-from app.models.stocks import Stock, StockBase, StockCreate, StockRead, StockUpdate
+from app.models.stocks import (
+    Stock,
+    StockBase,
+    StockCreate,
+    StockRead,
+    StockServiceUpdate,
+    StockUpdate,
+)
+from app.models.transactions import (
+    Transaction,
+    TransactionBase,
+    TransactionCreate,
+    TransactionRead,
+    TransactionType,
+    TransactionUpdate,
+)
 from app.models.users import User, UserBase, UserCreate, UserRead, UserUpdate
 
 __all__ = [
@@ -24,7 +39,14 @@ __all__ = [
     "StockBase",
     "StockCreate",
     "StockRead",
+    "StockServiceUpdate",
     "StockUpdate",
+    "Transaction",
+    "TransactionBase",
+    "TransactionCreate",
+    "TransactionRead",
+    "TransactionType",
+    "TransactionUpdate",
     "User",
     "UserBase",
     "UserCreate",

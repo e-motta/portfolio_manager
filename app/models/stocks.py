@@ -1,9 +1,10 @@
+from collections import deque
 from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import DECIMAL, Column
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import JSON, Field, Relationship, SQLModel
 
 from app.models.generic import BaseTableModel
 
@@ -23,6 +24,8 @@ class Stock(BaseTableModel, StockBase, table=True):
 
     account_id: UUID = Field(foreign_key="accounts.id", ondelete="CASCADE")
     account: list["Account"] = Relationship(back_populates="stocks")  # type: ignore
+
+    fifo_lots: list = Field(sa_column=Column(JSON), default_factory=list)
 
 
 class StockCreate(StockBase):
@@ -46,3 +49,9 @@ class StockUpdate(SQLModel):
     target_allocation: Decimal | None = Field(
         sa_column=Column(DECIMAL(12, 2)), default=None, ge=0
     )
+
+
+class StockServiceUpdate(SQLModel):
+    cost_basis: Decimal = Field(sa_column=Column(DECIMAL(18, 8)), ge=0)
+    position: Decimal = Field(sa_column=Column(DECIMAL(14, 4)), ge=0)
+    average_price: Decimal = Field(sa_column=Column(DECIMAL(18, 8)), ge=0)

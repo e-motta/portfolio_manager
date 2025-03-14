@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from fastapi import status
 from fastapi.testclient import TestClient
 from sqlmodel import Session
@@ -6,12 +8,13 @@ from app.core.config import settings
 from app.tests.utils import (
     create_account,
     create_stock,
+    create_transaction,
     create_user,
     get_token_headers,
 )
 
 
-def test_stock_unauthorized(
+def test_transaction_unauthorized(
     client: TestClient,
     session: Session,
     test_username: str,
@@ -20,38 +23,35 @@ def test_stock_unauthorized(
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
     stock = create_stock(session, account=account)
+    transaction = create_transaction(session, account=account, stock=stock)
 
     body = {
-        "name": "new_name",
-        "symbol": "NEW",
-        "target_allocation": 50,
+        "type": "buy",
+        "quantity": 10,
+        "price": 100,
+        "stock_id": str(stock.id),
     }
 
     r_get_detail = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}/{transaction.id}",
     )
     assert r_get_detail.status_code == status.HTTP_401_UNAUTHORIZED
     r_get_list = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}",
     )
     assert r_get_list.status_code == status.HTTP_401_UNAUTHORIZED
     r_create = client.post(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}",
         json=body,
     )
     assert r_create.status_code == status.HTTP_401_UNAUTHORIZED
-    r_udpate = client.patch(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
-        json=body,
-    )
-    assert r_udpate.status_code == status.HTTP_401_UNAUTHORIZED
     r_delete = client.delete(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}/{transaction.id}",
     )
     assert r_delete.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_stock_forbidden(
+def test_transaction_forbidden(
     client: TestClient,
     session: Session,
     test_username: str,
@@ -61,54 +61,51 @@ def test_stock_forbidden(
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
     stock = create_stock(session, account=account)
+    transaction = create_transaction(session, account=account, stock=stock)
 
     body = {
-        "name": "new_name",
-        "symbol": "NEW",
-        "target_allocation": 50,
+        "type": "buy",
+        "quantity": 10,
+        "price": 100,
+        "stock_id": str(stock.id),
     }
 
     r_get_detail = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}/{transaction.id}",
         headers=normal_user_token_headers,
     )
     assert r_get_detail.status_code == status.HTTP_403_FORBIDDEN
     r_get_list = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}",
         headers=normal_user_token_headers,
     )
     assert r_get_list.status_code == status.HTTP_403_FORBIDDEN
     r_create = client.post(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}",
         headers=normal_user_token_headers,
         json=body,
     )
     assert r_create.status_code == status.HTTP_403_FORBIDDEN
-    r_udpate = client.patch(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
-        headers=normal_user_token_headers,
-        json=body,
-    )
-    assert r_udpate.status_code == status.HTTP_403_FORBIDDEN
     r_delete = client.delete(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}/{transaction.id}",
         headers=normal_user_token_headers,
     )
     assert r_delete.status_code == status.HTTP_403_FORBIDDEN
 
 
-def test_get_stock_list(
+def test_get_transaction_list(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    create_stock(session, account=account)
+    stock = create_stock(session, account=account)
+    create_transaction(session, account=account, stock=stock)
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
 
     r = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}",
         headers=token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
@@ -116,7 +113,27 @@ def test_get_stock_list(
     assert len(data) == 1
 
 
-def test_get_stock_detail(
+def test_get_transaction_detail(
+    client: TestClient, session: Session, test_username: str, test_password: str
+):
+    user = create_user(session, username=test_username, password=test_password)
+    account = create_account(session, current_user=user)
+    stock = create_stock(session, account=account)
+    transaction = create_transaction(session, account=account, stock=stock)
+    token_headers = get_token_headers(
+        client=client, username=test_username, password=test_password
+    )
+
+    r = client.get(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}/{transaction.id}",
+        headers=token_headers,
+    )
+    assert r.status_code == status.HTTP_200_OK
+    data = r.json()["data"]
+    assert data["id"] == str(transaction.id)
+
+
+def test_create_transaction(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
     user = create_user(session, username=test_username, password=test_password)
@@ -126,32 +143,15 @@ def test_get_stock_detail(
         client=client, username=test_username, password=test_password
     )
 
-    r = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
-        headers=token_headers,
-    )
-    assert r.status_code == status.HTTP_200_OK
-    data = r.json()["data"]
-    assert data["id"] == str(stock.id)
-
-
-def test_create_stock(
-    client: TestClient, session: Session, test_username: str, test_password: str
-):
-    user = create_user(session, username=test_username, password=test_password)
-    account = create_account(session, current_user=user)
-    token_headers = get_token_headers(
-        client=client, username=test_username, password=test_password
-    )
-
     body = {
-        "name": "new_name",
-        "symbol": "NEW",
-        "target_allocation": 50,
+        "type": "buy",
+        "quantity": 10,
+        "price": 100,
+        "stock_id": str(stock.id),
     }
 
     r = client.post(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}/",
         headers=token_headers,
         json=body,
     )
@@ -160,7 +160,7 @@ def test_create_stock(
     assert data["id"]
 
 
-def test_create_stock_negative_target_allocation(
+def test_create_transaction_invalid_stock_id(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
     user = create_user(session, username=test_username, password=test_password)
@@ -170,20 +170,84 @@ def test_create_stock_negative_target_allocation(
     )
 
     body = {
-        "name": "new_name",
-        "symbol": "NEW",
-        "target_allocation": -1,
+        "type": "buy",
+        "quantity": 10,
+        "price": 100,
+        "stock_id": "invalid_id",
     }
 
     r = client.post(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}/",
         headers=token_headers,
         json=body,
     )
     assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-def test_update_stock(
+def test_create_transaction_nonexistent_stock_id(
+    client: TestClient, session: Session, test_username: str, test_password: str
+):
+    user = create_user(session, username=test_username, password=test_password)
+    account = create_account(session, current_user=user)
+    token_headers = get_token_headers(
+        client=client, username=test_username, password=test_password
+    )
+
+    body = {
+        "type": "buy",
+        "quantity": 10,
+        "price": 100,
+        "stock_id": "60a2c086-f9c0-40e3-9e46-340c87e33835",
+    }
+
+    r = client.post(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}/",
+        headers=token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_create_transaction_negative_values(
+    client: TestClient, session: Session, test_username: str, test_password: str
+):
+    user = create_user(session, username=test_username, password=test_password)
+    account = create_account(session, current_user=user)
+    stock = create_stock(session, account=account)
+    token_headers = get_token_headers(
+        client=client, username=test_username, password=test_password
+    )
+
+    body_1 = {
+        "type": "buy",
+        "quantity": -1,
+        "price": 100,
+        "stock_id": str(stock.id),
+    }
+
+    r_1 = client.post(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}/",
+        headers=token_headers,
+        json=body_1,
+    )
+    assert r_1.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    body_2 = {
+        "type": "buy",
+        "quantity": 10,
+        "price": -100,
+        "stock_id": str(stock.id),
+    }
+
+    r_2 = client.post(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}/",
+        headers=token_headers,
+        json=body_2,
+    )
+    assert r_2.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+def test_create_transaction_invalid_type(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
     user = create_user(session, username=test_username, password=test_password)
@@ -194,65 +258,45 @@ def test_update_stock(
     )
 
     body = {
-        "name": "updated_name",
+        "type": "invalid_type",
+        "quantity": 10,
+        "price": 100,
+        "stock_id": str(stock.id),
     }
 
-    r = client.patch(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
-        headers=token_headers,
-        json=body,
-    )
-    assert r.status_code == status.HTTP_200_OK
-    data = r.json()["data"]
-    assert data["name"] == "updated_name"
-
-
-def test_update_stock_negative_target_allocation(
-    client: TestClient, session: Session, test_username: str, test_password: str
-):
-    user = create_user(session, username=test_username, password=test_password)
-    account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
-    token_headers = get_token_headers(
-        client=client, username=test_username, password=test_password
-    )
-
-    body = {
-        "target_allocation": -1,
-    }
-
-    r = client.patch(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+    r = client.post(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}/",
         headers=token_headers,
         json=body,
     )
     assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-def test_delete_stock(
+def test_delete_transaction(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
     stock = create_stock(session, account=account)
+    transaction = create_transaction(session, account=account, stock=stock)
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
 
     r_delete = client.delete(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}/{transaction.id}",
         headers=token_headers,
     )
     assert r_delete.status_code == status.HTTP_200_OK
 
     r_get = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}/{transaction.id}",
         headers=token_headers,
     )
     assert r_get.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_stocks_deleted_when_account_deleted(
+def test_transactions_deleted_when_account_deleted(
     client: TestClient,
     session: Session,
     test_username: str,
@@ -262,36 +306,10 @@ def test_stocks_deleted_when_account_deleted(
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
     stock = create_stock(session, account=account)
+    transaction = create_transaction(session, account=account, stock=stock)
 
     r_get = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/stocks/{stock.id}",
-        headers=admin_token_headers,
-    )
-    assert r_get.status_code == status.HTTP_200_OK
-
-    session.delete(account)
-    session.commit()
-
-    r_get_deleted = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/stocks/{stock.id}",
-        headers=admin_token_headers,
-    )
-    assert r_get_deleted.status_code == status.HTTP_404_NOT_FOUND
-
-
-def test_stocks_deleted_when_user_deleted(
-    client: TestClient,
-    session: Session,
-    test_username: str,
-    test_password: str,
-    admin_token_headers: dict[str, str],
-):
-    user = create_user(session, username=test_username, password=test_password)
-    account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
-
-    r_get = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}/{transaction.id}",
         headers=admin_token_headers,
     )
     assert r_get.status_code == status.HTTP_200_OK
@@ -300,7 +318,7 @@ def test_stocks_deleted_when_user_deleted(
     session.commit()
 
     r_get_deleted = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRANSACTIONS_ROUTE_STR}/{transaction.id}",
         headers=admin_token_headers,
     )
     assert r_get_deleted.status_code == status.HTTP_404_NOT_FOUND

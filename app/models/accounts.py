@@ -7,6 +7,7 @@ from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.generic import BaseTableModel
 from app.models.stocks import Stock
+from app.models.transactions import Transaction
 
 
 class AccountBase(SQLModel):
@@ -20,6 +21,9 @@ class Account(BaseTableModel, AccountBase, table=True):
     user_id: UUID = Field(foreign_key="users.id", ondelete="CASCADE")
     user: "User" = Relationship(back_populates="accounts")  # type: ignore
     stocks: list[Stock] = Relationship(back_populates="account", cascade_delete=True)
+    transactions: list[Transaction] = Relationship(
+        back_populates="account", cascade_delete=True
+    )
 
 
 class AccountCreate(AccountBase):

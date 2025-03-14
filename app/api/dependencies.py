@@ -6,14 +6,14 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
-from sqlmodel import Session, select
 from sqlalchemy.sql import func
+from sqlmodel import Session, select
 
 from app import crud
 from app.api.utils import verify_password
 from app.core.config import settings
 from app.core.db import engine
-from app.models import Account, Stock, TokenData, User
+from app.models import Account, Stock, TokenData, Transaction, User
 from app.models.generic import DetailItem
 
 
@@ -146,3 +146,12 @@ def get_stock_or_404(session: SessionDepAnnotated, stock_id: int | UUID):
             status_code=status.HTTP_404_NOT_FOUND, detail="Stock not found"
         )
     return stock_db
+
+
+def get_transaction_or_404(session: SessionDepAnnotated, transaction_id: int | UUID):
+    transaction_db = crud.get_by_id(Transaction, session, transaction_id)
+    if not transaction_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
+        )
+    return transaction_db

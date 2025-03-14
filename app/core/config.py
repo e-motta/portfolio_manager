@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     USERS_ROUTE_STR: str = "users"
     ACCOUNTS_ROUTE_STR: str = "accounts"
     STOCKS_ROUTE_STR: str = "stocks"
+    TRANSACTIONS_ROUTE_STR: str = "transactions"
 
     USERNAME_MAX_LENGTH: int = 30
 

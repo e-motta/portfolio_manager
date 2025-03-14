@@ -20,9 +20,12 @@ def create(session: Session, account_in: AccountCreate, current_user: User):
     return account_db
 
 
-def update(session: Session, account_db: Account, account_in: AccountUpdate):
-    account_data = account_in.model_dump(exclude_unset=True)
-    account_db.sqlmodel_update(account_data)
+def update(
+    session: Session, account_db: Account, account_in: AccountUpdate | None = None
+):
+    if account_in is not None:
+        account_data = account_in.model_dump(exclude_unset=True)
+        account_db.sqlmodel_update(account_data)
     session.add(account_db)
     session.commit()
     session.refresh(account_db)

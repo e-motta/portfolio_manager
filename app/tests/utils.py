@@ -7,7 +7,17 @@ from sqlmodel import Session
 
 from app import crud
 from app.core.config import settings
-from app.models import Account, AccountCreate, Stock, StockCreate, User, UserCreate
+from app.models import (
+    Account,
+    AccountCreate,
+    Stock,
+    StockCreate,
+    Transaction,
+    TransactionCreate,
+    TransactionType,
+    User,
+    UserCreate,
+)
 
 
 def generate_random_string(length: int = 10):
@@ -62,7 +72,7 @@ def create_account(
     *,
     current_user: User,
     name: str = "account_name",
-    buying_power: Decimal = Decimal("1000"),
+    buying_power: Decimal = Decimal("1000000"),
 ) -> Account:
     account_in = AccountCreate(name=name, buying_power=buying_power)
     account = crud.accounts.create(session, account_in, current_user)
@@ -88,6 +98,28 @@ def create_stock(
     if not stock:
         raise ValueError("Stock could not be created")
     return stock
+
+
+def create_transaction(
+    session: Session,
+    *,
+    account: Account,
+    stock: Stock,
+    type: TransactionType = TransactionType.BUY,
+    quantity: Decimal = Decimal("1"),
+    price: Decimal = Decimal("100"),
+):
+    transaction_in = TransactionCreate(
+        type=type, quantity=quantity, price=price, stock_id=stock.id
+    )
+    transaction = crud.transactions.create(session, transaction_in, account)
+    if not transaction:
+        raise ValueError("Transaction could not be created")
+    return transaction
+
+
+def delete_transaction(session: Session, *, transaction: Transaction):
+    crud.transactions.delete(session, transaction)
 
 
 def get_token_headers(
