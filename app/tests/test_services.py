@@ -3,6 +3,7 @@ from decimal import Decimal
 import pytest
 from sqlmodel import Session
 
+from app.models.contexts import TransactionContext
 from app.models.transactions import TransactionType
 from app.services import process_transaction, reprocess_all_transactions
 from app.tests.utils import (
@@ -32,7 +33,10 @@ def test_buy_initial_stock(session: Session):
     assert stock.average_price == 0
     assert stock.position == 0
 
-    process_transaction(session, account, stock, transaction_1)
+    ctx = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_1
+    )
+    process_transaction(ctx)
 
     assert stock.cost_basis == 1000
     assert stock.average_price == 100
@@ -53,7 +57,10 @@ def test_buy_at_different_price(session: Session):
         quantity=Decimal("10"),
         price=Decimal("100"),
     )
-    process_transaction(session, account, stock, transaction_1)
+    ctx_1 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_1
+    )
+    process_transaction(ctx_1)
 
     # Second purchase at a different price
     transaction_2 = create_transaction(
@@ -64,8 +71,10 @@ def test_buy_at_different_price(session: Session):
         quantity=Decimal("5"),
         price=Decimal("200"),
     )
-
-    process_transaction(session, account, stock, transaction_2)
+    ctx_2 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_2
+    )
+    process_transaction(ctx_2)
 
     assert stock.cost_basis == 2000  # 1000 + (5 * 200)
     assert stock.position == 15  # 10 + 5
@@ -90,7 +99,10 @@ def test_sell_some_stock_fifo_applies(session: Session):
         quantity=Decimal("10"),
         price=Decimal("100"),
     )
-    process_transaction(session, account, stock, transaction_1)
+    ctx_1 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_1
+    )
+    process_transaction(ctx_1)
 
     transaction_2 = create_transaction(
         session,
@@ -100,7 +112,10 @@ def test_sell_some_stock_fifo_applies(session: Session):
         quantity=Decimal("5"),
         price=Decimal("200"),
     )
-    process_transaction(session, account, stock, transaction_2)
+    ctx_2 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_2
+    )
+    process_transaction(ctx_2)
 
     # Selling some stock (FIFO applies)
     transaction_3 = create_transaction(
@@ -111,8 +126,10 @@ def test_sell_some_stock_fifo_applies(session: Session):
         quantity=Decimal("5"),
         price=Decimal("300"),
     )
-
-    process_transaction(session, account, stock, transaction_3)
+    ctx_3 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_3
+    )
+    process_transaction(ctx_3)
 
     assert stock.cost_basis == 1500  # (10 * 100) + (5 * 200) - (5 * 100)
     assert stock.position == 10  # 5 + 5
@@ -137,7 +154,10 @@ def test_sell_full_fifo_lot_and_part_next(session: Session):
         quantity=Decimal("5"),
         price=Decimal("100"),
     )
-    process_transaction(session, account, stock, transaction_1)
+    ctx_1 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_1
+    )
+    process_transaction(ctx_1)
 
     transaction_2 = create_transaction(
         session,
@@ -147,7 +167,10 @@ def test_sell_full_fifo_lot_and_part_next(session: Session):
         quantity=Decimal("5"),
         price=Decimal("200"),
     )
-    process_transaction(session, account, stock, transaction_2)
+    ctx_2 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_2
+    )
+    process_transaction(ctx_2)
 
     # Selling full FIFO lot and part of the next one
     transaction_3 = create_transaction(
@@ -158,8 +181,10 @@ def test_sell_full_fifo_lot_and_part_next(session: Session):
         quantity=Decimal("7"),
         price=Decimal("300"),
     )
-
-    process_transaction(session, account, stock, transaction_3)
+    ctx_3 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_3
+    )
+    process_transaction(ctx_3)
 
     assert stock.cost_basis == 600  # (5 * 200) - (5 * 100) - (2 * 200)
     assert stock.position == 3  # 5 + 5 - 7
@@ -183,7 +208,10 @@ def test_sell_all_remaining_stock(session: Session):
         quantity=Decimal("10"),
         price=Decimal("100"),
     )
-    process_transaction(session, account, stock, transaction_1)
+    ctx_1 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_1
+    )
+    process_transaction(ctx_1)
 
     transaction_2 = create_transaction(
         session,
@@ -193,10 +221,13 @@ def test_sell_all_remaining_stock(session: Session):
         quantity=Decimal("5"),
         price=Decimal("200"),
     )
-    process_transaction(session, account, stock, transaction_2)
+    ctx_2 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_2
+    )
+    process_transaction(ctx_2)
 
     # Selling all remaining stock
-    transaction_5 = create_transaction(
+    transaction_3 = create_transaction(
         session,
         account=account,
         stock=stock,
@@ -204,8 +235,10 @@ def test_sell_all_remaining_stock(session: Session):
         quantity=Decimal("15"),
         price=Decimal("300"),
     )
-
-    process_transaction(session, account, stock, transaction_5)
+    ctx_3 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_3
+    )
+    process_transaction(ctx_3)
 
     assert stock.cost_basis == 0  # All stock sold
     assert stock.position == 0
@@ -227,10 +260,13 @@ def test_sell_more_than_available_stock(session: Session):
         quantity=Decimal("10"),
         price=Decimal("100"),
     )
-    process_transaction(session, account, stock, transaction_1)
+    ctx_1 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_1
+    )
+    process_transaction(ctx_1)
 
     # Attempting to sell more than available stock (should fail)
-    transaction_6 = create_transaction(
+    transaction_2 = create_transaction(
         session,
         account=account,
         stock=stock,
@@ -238,9 +274,11 @@ def test_sell_more_than_available_stock(session: Session):
         quantity=Decimal("20"),
         price=Decimal("300"),
     )
-
+    ctx_2 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_2
+    )
     with pytest.raises(ValueError):
-        process_transaction(session, account, stock, transaction_6)
+        process_transaction(ctx_2)
 
 
 def test_buy_after_selling_all_stock(session: Session):
@@ -257,7 +295,10 @@ def test_buy_after_selling_all_stock(session: Session):
         quantity=Decimal("10"),
         price=Decimal("100"),
     )
-    process_transaction(session, account, stock, transaction_1)
+    ctx_1 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_1
+    )
+    process_transaction(ctx_1)
 
     transaction_2 = create_transaction(
         session,
@@ -267,10 +308,13 @@ def test_buy_after_selling_all_stock(session: Session):
         quantity=Decimal("5"),
         price=Decimal("200"),
     )
-    process_transaction(session, account, stock, transaction_2)
+    ctx_2 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_2
+    )
+    process_transaction(ctx_2)
 
     # Selling all stock
-    transaction_5 = create_transaction(
+    transaction_3 = create_transaction(
         session,
         account=account,
         stock=stock,
@@ -278,10 +322,13 @@ def test_buy_after_selling_all_stock(session: Session):
         quantity=Decimal("15"),
         price=Decimal("300"),
     )
-    process_transaction(session, account, stock, transaction_5)
+    ctx_3 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_3
+    )
+    process_transaction(ctx_3)
 
     # Buying new stock after selling all
-    transaction_7 = create_transaction(
+    transaction_4 = create_transaction(
         session,
         account=account,
         stock=stock,
@@ -289,8 +336,10 @@ def test_buy_after_selling_all_stock(session: Session):
         quantity=Decimal("4"),
         price=Decimal("250"),
     )
-
-    process_transaction(session, account, stock, transaction_7)
+    ctx_4 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_4
+    )
+    process_transaction(ctx_4)
 
     assert stock.cost_basis == 1000
     assert stock.position == 4
@@ -314,9 +363,11 @@ def test_buy_transaction_exceeds_buying_power(session: Session):
         quantity=Decimal("10"),
         price=Decimal("200"),  # Total cost = 10 * 200 = 2000 (exceeds buying power)
     )
-
+    ctx = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction
+    )
     with pytest.raises(ValueError):
-        process_transaction(session, account, stock, transaction)
+        process_transaction(ctx)
 
     # Ensure the stock and account remain unchanged
     assert stock.cost_basis == 0
@@ -339,8 +390,10 @@ def test_buy_transaction_subtracts_from_buying_power(session: Session):
         quantity=Decimal("5"),
         price=Decimal("100"),
     )
-
-    process_transaction(session, account, stock, transaction)
+    ctx = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction
+    )
+    process_transaction(ctx)
 
     assert account.buying_power == Decimal("9500")  # 10000 - 500 = 9500
 
@@ -358,7 +411,10 @@ def test_sell_transaction_adds_to_buying_power(session: Session):
         quantity=Decimal("5"),
         price=Decimal("100"),
     )
-    process_transaction(session, account, stock, transaction_1)
+    ctx_1 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_1
+    )
+    process_transaction(ctx_1)
 
     transaction_2 = create_transaction(
         session,
@@ -368,8 +424,10 @@ def test_sell_transaction_adds_to_buying_power(session: Session):
         quantity=Decimal("3"),
         price=Decimal("150"),
     )
-
-    process_transaction(session, account, stock, transaction_2)
+    ctx_2 = TransactionContext(
+        session=session, account=account, stock=stock, transaction=transaction_2
+    )
+    process_transaction(ctx_2)
 
     assert account.buying_power == Decimal("9950")  # 10000 - 500 + 450 = 9500
 

@@ -7,17 +7,10 @@ from sqlmodel import Session
 
 from app import crud
 from app.core.config import settings
-from app.models import (
-    Account,
-    AccountCreate,
-    Stock,
-    StockCreate,
-    Transaction,
-    TransactionCreate,
-    TransactionType,
-    User,
-    UserCreate,
-)
+from app.models.accounts import Account, AccountCreate
+from app.models.stocks import Stock, StockCreate
+from app.models.transactions import Transaction, TransactionCreate, TransactionType
+from app.models.users import User, UserCreate
 
 
 def generate_random_string(length: int = 10):

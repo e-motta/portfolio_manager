@@ -1,6 +1,7 @@
 from sqlmodel import Session
 
-from app.models import Account, Stock, StockCreate, StockServiceUpdate, StockUpdate
+from app.models.accounts import Account
+from app.models.stocks import Stock, StockCreate, StockServiceUpdate, StockUpdate
 
 
 def create(session: Session, stock_in: StockCreate, account_db: Account):

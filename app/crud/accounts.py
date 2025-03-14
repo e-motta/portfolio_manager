@@ -1,12 +1,13 @@
 from sqlalchemy import func
 from sqlmodel import Session, select
 
-from app.models import Account, AccountCreate, AccountUpdate, User
+from app.models.accounts import Account, AccountCreate, AccountUpdate
+from app.models.users import User
 
 
 def fetch_all(session: Session):
     statement = select(Account)
-    accounts = session.exec(statement)
+    accounts = session.exec(statement).all()
     count_statement = select(func.count()).select_from(Account)
     count = session.exec(count_statement).one()
     return accounts, count

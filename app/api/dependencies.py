@@ -13,8 +13,12 @@ from app import crud
 from app.api.utils import verify_password
 from app.core.config import settings
 from app.core.db import engine
-from app.models import Account, Stock, TokenData, Transaction, User
+from app.models.accounts import Account
+from app.models.auth import TokenData
 from app.models.generic import DetailItem
+from app.models.stocks import Stock
+from app.models.transactions import Transaction
+from app.models.users import User
 
 
 def get_session() -> Generator[Session, None, None]:

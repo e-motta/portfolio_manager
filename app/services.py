@@ -4,54 +4,51 @@ from decimal import Decimal
 from sqlmodel import Session
 
 from app import crud
-from app.models import Account, Stock, Transaction, TransactionType
+from app.models.accounts import Account
+from app.models.contexts import TransactionContext
+from app.models.stocks import Stock
+from app.models.transactions import TransactionType
 from app.utils import get_average_price
 
 
-def _buy_update_account(
-    session: Session, account: Account, stock: Stock, transaction: Transaction
-):
-    total = transaction.quantity * transaction.price
-    if total > account.buying_power:
+def _buy_update_account(ctx: TransactionContext):
+    total = ctx.transaction.quantity * ctx.transaction.price
+    if total > ctx.account.buying_power:
         raise ValueError(
-            f"Total value cannot be greater than account buying power for transaction of type '{transaction.type.value}'"
+            f"Total value cannot be greater than account buying power for transaction of type '{ctx.transaction.type.value}'"
         )
-    account.buying_power -= total
+    ctx.account.buying_power -= total
 
 
-def _sell_update_account(
-    session: Session, account: Account, stock: Stock, transaction: Transaction
-):
-    account.buying_power += transaction.quantity * transaction.price
+def _sell_update_account(ctx: TransactionContext):
+    ctx.account.buying_power += ctx.transaction.quantity * ctx.transaction.price
 
 
-def _buy_update_stock(
-    session: Session, account: Account, stock: Stock, transaction: Transaction
-):
-    fifo_lots = deque(stock.fifo_lots)
+def _buy_update_stock(ctx: TransactionContext):
+    fifo_lots = deque(ctx.stock.fifo_lots)
 
-    new_cost_basis = stock.cost_basis + transaction.quantity * transaction.price
-    new_position = stock.position + transaction.quantity
+    new_cost_basis = (
+        ctx.stock.cost_basis + ctx.transaction.quantity * ctx.transaction.price
+    )
+    new_position = ctx.stock.position + ctx.transaction.quantity
 
-    fifo_lots.append((str(transaction.quantity), str(transaction.price)))
-    stock.fifo_lots = list(fifo_lots)
+    fifo_lots.append((str(ctx.transaction.quantity), str(ctx.transaction.price)))
+    ctx.stock.fifo_lots = list(fifo_lots)
 
-    stock.cost_basis = new_cost_basis
-    stock.position = new_position
-    stock.average_price = get_average_price(new_cost_basis, new_position)
+    ctx.stock.cost_basis = new_cost_basis
+    ctx.stock.position = new_position
+    ctx.stock.average_price = get_average_price(new_cost_basis, new_position)
 
 
-def _sell_update_stock(
-    session: Session, account: Account, stock: Stock, transaction: Transaction
-):
-    fifo_lots = deque(stock.fifo_lots)
+def _sell_update_stock(ctx: TransactionContext):
+    fifo_lots = deque(ctx.stock.fifo_lots)
 
-    if stock.position < transaction.quantity:
+    if ctx.stock.position < ctx.transaction.quantity:
         raise ValueError(
-            f"Quantity cannot be greater than current position for transaction of type '{transaction.type.value}'"
+            f"Quantity cannot be greater than current position for transaction of type '{ctx.transaction.type.value}'"
         )
 
-    sell_quantity = transaction.quantity
+    sell_quantity = ctx.transaction.quantity
     total_cost_removed = Decimal("0")
 
     # Process FIFO queue
@@ -71,14 +68,14 @@ def _sell_update_stock(
                 str(first_lot_price),
             )
             sell_quantity = 0
-        stock.fifo_lots = list(fifo_lots)
+        ctx.stock.fifo_lots = list(fifo_lots)
 
-    new_cost_basis = stock.cost_basis - total_cost_removed
-    new_position = stock.position - transaction.quantity
+    new_cost_basis = ctx.stock.cost_basis - total_cost_removed
+    new_position = ctx.stock.position - ctx.transaction.quantity
 
-    stock.cost_basis = new_cost_basis
-    stock.position = new_position
-    stock.average_price = get_average_price(new_cost_basis, new_position)
+    ctx.stock.cost_basis = new_cost_basis
+    ctx.stock.position = new_position
+    ctx.stock.average_price = get_average_price(new_cost_basis, new_position)
 
 
 ACCOUNT_OPERATIONS = {
@@ -91,13 +88,11 @@ STOCK_OPERATIONS = {
 }
 
 
-def process_transaction(
-    session: Session, account: Account, stock: Stock, transaction: Transaction
-):
-    ACCOUNT_OPERATIONS[transaction.type](session, account, stock, transaction)
-    STOCK_OPERATIONS[transaction.type](session, account, stock, transaction)
-    crud.accounts.update(session, account)
-    crud.stocks.update(session, stock)
+def process_transaction(ctx: TransactionContext):
+    ACCOUNT_OPERATIONS[ctx.transaction.type](ctx)
+    STOCK_OPERATIONS[ctx.transaction.type](ctx)
+    crud.accounts.update(ctx.session, ctx.account)
+    crud.stocks.update(ctx.session, ctx.stock)
 
 
 def reprocess_all_transactions(session: Session, account: Account, stock: Stock):
@@ -118,4 +113,10 @@ def reprocess_all_transactions(session: Session, account: Account, stock: Stock)
     transactions = crud.transactions.get_all_for_stock(session, account, stock)
 
     for txn in transactions:
-        process_transaction(session, account, stock, txn)
+        ctx = TransactionContext(
+            session=session,
+            account=account,
+            stock=stock,
+            transaction=txn,
+        )
+        process_transaction(ctx)

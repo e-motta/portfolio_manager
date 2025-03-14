@@ -1,6 +1,8 @@
 from sqlmodel import Session, col, select
 
-from app.models import Account, Stock, Transaction, TransactionCreate, TransactionUpdate
+from app.models.accounts import Account
+from app.models.stocks import Stock
+from app.models.transactions import Transaction, TransactionCreate, TransactionUpdate
 
 
 def get_all_for_stock(session: Session, account: Account, stock: Stock):

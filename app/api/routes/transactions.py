@@ -10,13 +10,14 @@ from app.api.dependencies import (
 )
 from app.api.utils import verify_ownership_or_403
 from app.core.config import settings
-from app.models import (
-    Account,
+from app.models.accounts import Account
+from app.models.contexts import TransactionContext
+from app.models.generic import Meta, ResponseMultiple, ResponseSingle
+from app.models.transactions import (
     Transaction,
     TransactionCreate,
     TransactionRead,
 )
-from app.models.generic import Meta, ResponseMultiple, ResponseSingle
 from app.services import process_transaction
 
 router = APIRouter(
@@ -62,7 +63,15 @@ def create_transaction(
     stock_db = get_stock_or_404(session, transaction_in.stock_id)
     verify_ownership_or_403(stock_db.account_id, account_db.id)
     transaction_db = crud.transactions.create(session, transaction_in, account_db)
-    process_transaction(session, account_db, stock_db, transaction_db)
+
+    ctx = TransactionContext(
+        session=session,
+        account=account_db,
+        stock=stock_db,
+        transaction=transaction_db,
+    )
+    process_transaction(ctx)
+
     return ResponseSingle(
         data=transaction_db, message="Transaction created successfully"
     )

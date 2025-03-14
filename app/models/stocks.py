@@ -1,4 +1,3 @@
-from collections import deque
 from datetime import datetime
 from decimal import Decimal
 from uuid import UUID

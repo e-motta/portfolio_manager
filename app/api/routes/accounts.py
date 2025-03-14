@@ -8,7 +8,7 @@ from app.api.dependencies import (
 )
 from app.api.utils import verify_ownership_or_403
 from app.core.config import settings
-from app.models import Account, AccountCreate, AccountRead, AccountUpdate
+from app.models.accounts import Account, AccountCreate, AccountRead, AccountUpdate
 from app.models.generic import Meta, ResponseMultiple, ResponseSingle
 
 router = APIRouter(
