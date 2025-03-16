@@ -2,7 +2,6 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import DECIMAL, Column
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.generic import BaseTableModel
@@ -12,7 +11,7 @@ from app.models.transactions import Transaction
 
 class AccountBase(SQLModel):
     name: str
-    buying_power: Decimal = Field(sa_column=Column(DECIMAL(12, 2)), ge=0)
+    buying_power: Decimal = Field(max_digits=12, decimal_places=2, ge=0)
 
 
 class Account(BaseTableModel, AccountBase, table=True):
@@ -42,5 +41,5 @@ class AccountRead(AccountBase):
 class AccountUpdate(SQLModel):
     name: str | None = None
     buying_power: Decimal | None = Field(
-        sa_column=Column(DECIMAL(12, 2)), default=None, ge=0
+        max_digits=12, decimal_places=2, default=None, ge=0
     )
