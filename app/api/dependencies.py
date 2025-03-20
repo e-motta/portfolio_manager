@@ -16,8 +16,9 @@ from app.core.db import engine
 from app.models.accounts import Account
 from app.models.auth import TokenData
 from app.models.generic import DetailItem
+from app.models.ledger import Ledger
 from app.models.stocks import Stock
-from app.models.transactions import Transaction
+from app.models.trades import Trade
 from app.models.users import User
 
 
@@ -152,10 +153,19 @@ def get_stock_or_404(session: SessionDepAnnotated, stock_id: int | UUID):
     return stock_db
 
 
-def get_transaction_or_404(session: SessionDepAnnotated, transaction_id: int | UUID):
-    transaction_db = crud.get_by_id(Transaction, session, transaction_id)
-    if not transaction_db:
+def get_trade_or_404(session: SessionDepAnnotated, trade_id: int | UUID):
+    trade_db = crud.get_by_id(Trade, session, trade_id)
+    if not trade_db:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found"
         )
-    return transaction_db
+    return trade_db
+
+
+def get_ledger_item_or_404(session: SessionDepAnnotated, ledger_id: int | UUID):
+    ledger_item_db = crud.get_by_id(Ledger, session, ledger_id)
+    if not ledger_item_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Ledger item not found"
+        )
+    return ledger_item_db

@@ -3,13 +3,29 @@ from dataclasses import dataclass
 from sqlmodel import Session
 
 from app.models.accounts import Account
+from app.models.ledger import Ledger, LedgerType
 from app.models.stocks import Stock
-from app.models.transactions import Transaction
+from app.models.trades import Trade, TradeType
 
 
 @dataclass
-class TransactionContext:
+class TradeTransactionContext:
     session: Session
     account: Account
     stock: Stock
-    transaction: Transaction
+    type: TradeType
+    trade: Trade
+    ledger: None = None
+
+
+@dataclass
+class LedgerTransactionContext:
+    session: Session
+    account: Account
+    type: LedgerType
+    ledger: Ledger
+    stock: None = None
+    trade: None = None
+
+
+TransactionContext = TradeTransactionContext | LedgerTransactionContext

@@ -5,13 +5,13 @@ from uuid import UUID
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.generic import BaseTableModel
+from app.models.ledger import Ledger
 from app.models.stocks import Stock
-from app.models.transactions import Transaction
+from app.models.trades import Trade
 
 
 class AccountBase(SQLModel):
     name: str
-    buying_power: Decimal = Field(max_digits=12, decimal_places=2, ge=0)
 
 
 class Account(BaseTableModel, AccountBase, table=True):
@@ -19,10 +19,12 @@ class Account(BaseTableModel, AccountBase, table=True):
 
     user_id: UUID = Field(foreign_key="users.id", ondelete="CASCADE")
     user: "User" = Relationship(back_populates="accounts")  # type: ignore
-    stocks: list[Stock] = Relationship(back_populates="account", cascade_delete=True)
-    transactions: list[Transaction] = Relationship(
-        back_populates="account", cascade_delete=True
+    buying_power: Decimal = Field(
+        max_digits=12, decimal_places=2, ge=0, default=Decimal("0")
     )
+    stocks: list[Stock] = Relationship(back_populates="account", cascade_delete=True)
+    trades: list[Trade] = Relationship(back_populates="account", cascade_delete=True)
+    ledger: list[Ledger] = Relationship(back_populates="account", cascade_delete=True)
 
 
 class AccountCreate(AccountBase):
@@ -31,6 +33,7 @@ class AccountCreate(AccountBase):
 
 class AccountRead(AccountBase):
     user_id: UUID
+    buying_power: Decimal
     stocks: list[Stock]
     id: UUID
     created_at: datetime
@@ -40,6 +43,3 @@ class AccountRead(AccountBase):
 
 class AccountUpdate(SQLModel):
     name: str | None = None
-    buying_power: Decimal | None = Field(
-        max_digits=12, decimal_places=2, default=None, ge=0
-    )

@@ -1,38 +1,44 @@
 from collections import deque
 from decimal import Decimal
+from typing import Callable
+from uuid import UUID
 
+from fastapi import HTTPException, status
 from sqlmodel import Session
 
 from app import crud
 from app.models.accounts import Account
-from app.models.contexts import TransactionContext
-from app.models.stocks import Stock
-from app.models.transactions import TransactionType
+from app.models.contexts import (
+    LedgerTransactionContext,
+    TradeTransactionContext,
+    TransactionContext,
+)
+from app.models.generic import DetailItem
+from app.models.ledger import Ledger, LedgerType
+from app.models.trades import Trade, TradeType
 from app.utils import get_average_price
 
 
-def _buy_update_account(ctx: TransactionContext):
-    total = ctx.transaction.quantity * ctx.transaction.price
+def _buy_update_account(ctx: TradeTransactionContext):
+    total = ctx.trade.quantity * ctx.trade.price
     if total > ctx.account.buying_power:
         raise ValueError(
-            f"Total value cannot be greater than account buying power for transaction of type '{ctx.transaction.type.value}'"
+            f"Total value cannot be greater than account buying power for transaction of type '{ctx.trade.type.value}'"
         )
     ctx.account.buying_power -= total
 
 
-def _sell_update_account(ctx: TransactionContext):
-    ctx.account.buying_power += ctx.transaction.quantity * ctx.transaction.price
+def _sell_update_account(ctx: TradeTransactionContext):
+    ctx.account.buying_power += ctx.trade.quantity * ctx.trade.price
 
 
-def _buy_update_stock(ctx: TransactionContext):
+def _buy_update_stock(ctx: TradeTransactionContext):
     fifo_lots = deque(ctx.stock.fifo_lots)
 
-    new_cost_basis = (
-        ctx.stock.cost_basis + ctx.transaction.quantity * ctx.transaction.price
-    )
-    new_position = ctx.stock.position + ctx.transaction.quantity
+    new_cost_basis = ctx.stock.cost_basis + ctx.trade.quantity * ctx.trade.price
+    new_position = ctx.stock.position + ctx.trade.quantity
 
-    fifo_lots.append((str(ctx.transaction.quantity), str(ctx.transaction.price)))
+    fifo_lots.append((str(ctx.trade.quantity), str(ctx.trade.price)))
     ctx.stock.fifo_lots = list(fifo_lots)
 
     ctx.stock.cost_basis = new_cost_basis
@@ -40,15 +46,15 @@ def _buy_update_stock(ctx: TransactionContext):
     ctx.stock.average_price = get_average_price(new_cost_basis, new_position)
 
 
-def _sell_update_stock(ctx: TransactionContext):
+def _sell_update_stock(ctx: TradeTransactionContext):
     fifo_lots = deque(ctx.stock.fifo_lots)
 
-    if ctx.stock.position < ctx.transaction.quantity:
+    if ctx.stock.position < ctx.trade.quantity:
         raise ValueError(
-            f"Quantity cannot be greater than current position for transaction of type '{ctx.transaction.type.value}'"
+            f"Quantity cannot be greater than current position for transaction of type '{ctx.trade.type.value}'"
         )
 
-    sell_quantity = ctx.transaction.quantity
+    sell_quantity = ctx.trade.quantity
     total_cost_removed = Decimal("0")
 
     # Process FIFO queue
@@ -71,52 +77,78 @@ def _sell_update_stock(ctx: TransactionContext):
         ctx.stock.fifo_lots = list(fifo_lots)
 
     new_cost_basis = ctx.stock.cost_basis - total_cost_removed
-    new_position = ctx.stock.position - ctx.transaction.quantity
+    new_position = ctx.stock.position - ctx.trade.quantity
 
     ctx.stock.cost_basis = new_cost_basis
     ctx.stock.position = new_position
     ctx.stock.average_price = get_average_price(new_cost_basis, new_position)
 
 
-ACCOUNT_OPERATIONS = {
-    TransactionType.BUY: _buy_update_account,
-    TransactionType.SELL: _sell_update_account,
+def _deposit_update_account(ctx: LedgerTransactionContext):
+    ctx.account.buying_power += ctx.ledger.amount
+
+
+def _withdrawal_update_account(ctx: LedgerTransactionContext):
+    if ctx.account.buying_power < ctx.ledger.amount:
+        raise ValueError("Withdrawn amount cannot be greater than account buying power")
+    ctx.account.buying_power -= ctx.ledger.amount
+
+
+ACCOUNT_OPERATIONS: dict[TradeType | LedgerType, Callable] = {
+    TradeType.BUY: _buy_update_account,
+    TradeType.SELL: _sell_update_account,
+    LedgerType.DEPOSIT: _deposit_update_account,
+    LedgerType.WITHDRAWAL: _withdrawal_update_account,
 }
-STOCK_OPERATIONS = {
-    TransactionType.BUY: _buy_update_stock,
-    TransactionType.SELL: _sell_update_stock,
+STOCK_OPERATIONS: dict[TradeType | LedgerType, Callable] = {
+    TradeType.BUY: _buy_update_stock,
+    TradeType.SELL: _sell_update_stock,
 }
 
 
 def process_transaction(ctx: TransactionContext):
-    ACCOUNT_OPERATIONS[ctx.transaction.type](ctx)
-    STOCK_OPERATIONS[ctx.transaction.type](ctx)
-    crud.accounts.update(ctx.session, ctx.account)
-    crud.stocks.update(ctx.session, ctx.stock)
+    try:
+        if ctx.account is not None:
+            ACCOUNT_OPERATIONS[ctx.type](ctx)
+            crud.accounts.update(ctx.session, ctx.account)
+        if ctx.stock is not None:
+            STOCK_OPERATIONS[ctx.type](ctx)
+            crud.stocks.update(ctx.session, ctx.stock)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=DetailItem(
+                type="cannot_process_transaction",
+                loc=[],
+                msg=str(e),
+            ).model_dump(),
+        )
 
 
-def reprocess_all_transactions(session: Session, account: Account, stock: Stock):
-    """Reprocess all transactions for a given stock.
-    This is necessary when a transaction is updated or deleted,
-     in order to maintain FIFO order.
-    """
-    # ! not working yet
-    # todo: add transaction types: deposit, withdrawal
-    # todo: change Account model: don't allow direct buying_power updates
-    # todo: change Account model: update buying_power with transactions
+def reprocess_transactions_excluding(
+    session: Session, account: Account, exclude: list[UUID]
+):
+    """Reprocess all transactions for a given account, excluding some by id."""
+    account.buying_power = Decimal("0")
 
-    stock.position = Decimal("0")
-    stock.cost_basis = Decimal("0")
-    stock.average_price = Decimal("0")
-    stock.fifo_lots = []
+    stocks = list(crud.stocks.get_all_for_account(session, account))
+    for s in stocks:
+        s.position = Decimal("0")
+        s.cost_basis = Decimal("0")
+        s.average_price = Decimal("0")
+        s.fifo_lots = []
 
-    transactions = crud.transactions.get_all_for_stock(session, account, stock)
+    trade_items = list(crud.trades.get_all_for_account(session, account))
+    ledger_items = list(crud.ledger.get_all_for_account(session, account))
+
+    transactions = trade_items + ledger_items
+    transactions.sort(key=lambda item: item.updated_at)
 
     for txn in transactions:
-        ctx = TransactionContext(
-            session=session,
-            account=account,
-            stock=stock,
-            transaction=txn,
-        )
+        if txn.id in exclude:
+            continue
+        if isinstance(txn, Trade):
+            ctx = TradeTransactionContext(session, account, txn.stock, txn.type, txn)
+        if isinstance(txn, Ledger):
+            ctx = LedgerTransactionContext(session, account, txn.type, txn)
         process_transaction(ctx)

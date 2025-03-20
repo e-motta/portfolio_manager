@@ -1,7 +1,18 @@
-from sqlmodel import Session
+from sqlmodel import Session, col, select
 
 from app.models.accounts import Account
 from app.models.stocks import Stock, StockCreate, StockServiceUpdate, StockUpdate
+
+
+def get_all_for_account(session: Session, account: Account):
+    statement = (
+        select(Stock)
+        .where(Stock.account_id == account.id)
+        .order_by(col(Stock.created_at))
+    )
+
+    stocks = session.exec(statement).all()
+    return stocks
 
 
 def create(session: Session, stock_in: StockCreate, account_db: Account):

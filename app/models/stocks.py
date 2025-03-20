@@ -6,6 +6,7 @@ from sqlalchemy import Column
 from sqlmodel import JSON, Field, Relationship, SQLModel
 
 from app.models.generic import BaseTableModel
+from app.models.trades import Trade
 
 
 class StockBase(SQLModel):
@@ -23,6 +24,7 @@ class Stock(BaseTableModel, StockBase, table=True):
 
     account_id: UUID = Field(foreign_key="accounts.id", ondelete="CASCADE")
     account: list["Account"] = Relationship(back_populates="stocks")  # type: ignore
+    trades: list[Trade] = Relationship(back_populates="stock", cascade_delete=True)
 
     fifo_lots: list = Field(sa_column=Column(JSON), default_factory=list)
 

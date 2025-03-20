@@ -8,30 +8,32 @@ from sqlmodel import Field, Relationship, SQLModel
 from app.models.generic import BaseTableModel
 
 
-class TransactionType(str, Enum):
+class TradeType(str, Enum):
     BUY = "buy"
     SELL = "sell"
 
 
-class TransactionBase(SQLModel):
-    type: TransactionType
+class TradeBase(SQLModel):
+    type: TradeType
     quantity: Decimal = Field(max_digits=14, decimal_places=4, ge=0)
     price: Decimal = Field(max_digits=12, decimal_places=2, ge=0)
     stock_id: UUID
 
 
-class Transaction(BaseTableModel, TransactionBase, table=True):
-    __tablename__: str = "transactions"
+class Trade(BaseTableModel, TradeBase, table=True):
+    __tablename__: str = "trades"
 
     account_id: UUID = Field(foreign_key="accounts.id", ondelete="CASCADE")
-    account: "Account" = Relationship(back_populates="transactions")  # type: ignore
+    account: "Account" = Relationship(back_populates="trades")  # type: ignore
+    stock_id: UUID = Field(foreign_key="stocks.id", ondelete="CASCADE")
+    stock: "Stock" = Relationship(back_populates="trades")  # type: ignore
 
 
-class TransactionCreate(TransactionBase):
+class TradeCreate(TradeBase):
     pass
 
 
-class TransactionRead(TransactionBase):
+class TradeRead(TradeBase):
     id: UUID
     created_at: datetime
     updated_at: datetime
@@ -39,7 +41,7 @@ class TransactionRead(TransactionBase):
     account_id: UUID
 
 
-class TransactionUpdate(SQLModel):
+class TradeUpdate(SQLModel):
     quantity: Decimal | None = Field(
         max_digits=14, decimal_places=4, default=None, ge=0
     )
