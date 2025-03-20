@@ -6,7 +6,7 @@ from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.generic import BaseTableModel
 from app.models.ledger import Ledger
-from app.models.stocks import Stock
+from app.models.securities import Security
 from app.models.trades import Trade
 
 
@@ -22,7 +22,9 @@ class Account(BaseTableModel, AccountBase, table=True):
     buying_power: Decimal = Field(
         max_digits=12, decimal_places=2, ge=0, default=Decimal("0")
     )
-    stocks: list[Stock] = Relationship(back_populates="account", cascade_delete=True)
+    securities: list[Security] = Relationship(
+        back_populates="account", cascade_delete=True
+    )
     trades: list[Trade] = Relationship(back_populates="account", cascade_delete=True)
     ledger: list[Ledger] = Relationship(back_populates="account", cascade_delete=True)
 
@@ -34,7 +36,7 @@ class AccountCreate(AccountBase):
 class AccountRead(AccountBase):
     user_id: UUID
     buying_power: Decimal
-    stocks: list[Stock]
+    securities: list[Security]
     id: UUID
     created_at: datetime
     updated_at: datetime

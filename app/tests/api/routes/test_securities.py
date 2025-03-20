@@ -5,13 +5,13 @@ from sqlmodel import Session
 from app.core.config import settings
 from app.tests.utils import (
     create_account,
-    create_stock,
+    create_security,
     create_user,
     get_token_headers,
 )
 
 
-def test_stock_unauthorized(
+def test_security_unauthorized(
     client: TestClient,
     session: Session,
     test_username: str,
@@ -19,7 +19,7 @@ def test_stock_unauthorized(
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
+    security = create_security(session, account=account)
 
     body = {
         "name": "new_name",
@@ -28,30 +28,30 @@ def test_stock_unauthorized(
     }
 
     r_get_detail = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
     )
     assert r_get_detail.status_code == status.HTTP_401_UNAUTHORIZED
     r_get_list = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}",
     )
     assert r_get_list.status_code == status.HTTP_401_UNAUTHORIZED
     r_create = client.post(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}",
         json=body,
     )
     assert r_create.status_code == status.HTTP_401_UNAUTHORIZED
     r_udpate = client.patch(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
         json=body,
     )
     assert r_udpate.status_code == status.HTTP_401_UNAUTHORIZED
     r_delete = client.delete(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
     )
     assert r_delete.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_stock_forbidden(
+def test_security_forbidden(
     client: TestClient,
     session: Session,
     test_username: str,
@@ -60,7 +60,7 @@ def test_stock_forbidden(
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
+    security = create_security(session, account=account)
 
     body = {
         "name": "new_name",
@@ -69,46 +69,46 @@ def test_stock_forbidden(
     }
 
     r_get_detail = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
         headers=normal_user_token_headers,
     )
     assert r_get_detail.status_code == status.HTTP_403_FORBIDDEN
     r_get_list = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}",
         headers=normal_user_token_headers,
     )
     assert r_get_list.status_code == status.HTTP_403_FORBIDDEN
     r_create = client.post(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}",
         headers=normal_user_token_headers,
         json=body,
     )
     assert r_create.status_code == status.HTTP_403_FORBIDDEN
     r_udpate = client.patch(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
         headers=normal_user_token_headers,
         json=body,
     )
     assert r_udpate.status_code == status.HTTP_403_FORBIDDEN
     r_delete = client.delete(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
         headers=normal_user_token_headers,
     )
     assert r_delete.status_code == status.HTTP_403_FORBIDDEN
 
 
-def test_get_stock_list(
+def test_get_security_list(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    create_stock(session, account=account)
+    create_security(session, account=account)
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
 
     r = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}",
         headers=token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
@@ -116,26 +116,26 @@ def test_get_stock_list(
     assert len(data) == 1
 
 
-def test_get_stock_detail(
+def test_get_security_detail(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
+    security = create_security(session, account=account)
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
 
     r = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
         headers=token_headers,
     )
     assert r.status_code == status.HTTP_200_OK
     data = r.json()["data"]
-    assert data["id"] == str(stock.id)
+    assert data["id"] == str(security.id)
 
 
-def test_create_stock(
+def test_create_security(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
     user = create_user(session, username=test_username, password=test_password)
@@ -151,7 +151,7 @@ def test_create_stock(
     }
 
     r = client.post(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/",
         headers=token_headers,
         json=body,
     )
@@ -160,7 +160,7 @@ def test_create_stock(
     assert data["id"]
 
 
-def test_create_stock_negative_target_allocation(
+def test_create_security_negative_target_allocation(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
     user = create_user(session, username=test_username, password=test_password)
@@ -176,19 +176,19 @@ def test_create_stock_negative_target_allocation(
     }
 
     r = client.post(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/",
         headers=token_headers,
         json=body,
     )
     assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-def test_update_stock(
+def test_update_security(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
+    security = create_security(session, account=account)
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
@@ -198,7 +198,7 @@ def test_update_stock(
     }
 
     r = client.patch(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
         headers=token_headers,
         json=body,
     )
@@ -207,12 +207,12 @@ def test_update_stock(
     assert data["name"] == "updated_name"
 
 
-def test_update_stock_negative_target_allocation(
+def test_update_security_negative_target_allocation(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
+    security = create_security(session, account=account)
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
@@ -222,37 +222,37 @@ def test_update_stock_negative_target_allocation(
     }
 
     r = client.patch(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
         headers=token_headers,
         json=body,
     )
     assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-def test_delete_stock(
+def test_delete_security(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
+    security = create_security(session, account=account)
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
 
     r_delete = client.delete(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
         headers=token_headers,
     )
     assert r_delete.status_code == status.HTTP_200_OK
 
     r_get = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
         headers=token_headers,
     )
     assert r_get.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_stocks_deleted_when_account_deleted(
+def test_securities_deleted_when_account_deleted(
     client: TestClient,
     session: Session,
     test_username: str,
@@ -261,10 +261,10 @@ def test_stocks_deleted_when_account_deleted(
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
+    security = create_security(session, account=account)
 
     r_get = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/stocks/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
         headers=admin_token_headers,
     )
     assert r_get.status_code == status.HTTP_200_OK
@@ -273,13 +273,13 @@ def test_stocks_deleted_when_account_deleted(
     session.commit()
 
     r_get_deleted = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/stocks/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
         headers=admin_token_headers,
     )
     assert r_get_deleted.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_stocks_deleted_when_user_deleted(
+def test_securities_deleted_when_user_deleted(
     client: TestClient,
     session: Session,
     test_username: str,
@@ -288,10 +288,10 @@ def test_stocks_deleted_when_user_deleted(
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
+    security = create_security(session, account=account)
 
     r_get = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
         headers=admin_token_headers,
     )
     assert r_get.status_code == status.HTTP_200_OK
@@ -300,7 +300,7 @@ def test_stocks_deleted_when_user_deleted(
     session.commit()
 
     r_get_deleted = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.STOCKS_ROUTE_STR}/{stock.id}",
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
         headers=admin_token_headers,
     )
     assert r_get_deleted.status_code == status.HTTP_404_NOT_FOUND
