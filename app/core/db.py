@@ -4,7 +4,7 @@ from alembic import command
 from alembic.config import Config
 from app import crud
 from app.core.config import settings
-from app.models import User, UserCreate
+from app.models.users import User, UserCreate
 
 engine = create_engine(settings.DATABASE_URL)
 

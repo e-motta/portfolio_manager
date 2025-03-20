@@ -7,7 +7,13 @@ from sqlmodel import Session
 
 from app import crud
 from app.core.config import settings
-from app.models import Account, AccountCreate, Stock, StockCreate, User, UserCreate
+from app.models.accounts import Account, AccountCreate
+from app.models.contexts import LedgerTransactionContext
+from app.models.ledger import LedgerCreate, LedgerType
+from app.models.stocks import Stock, StockCreate
+from app.models.trades import Trade, TradeCreate, TradeType
+from app.models.users import User, UserCreate
+from app.services import process_transaction
 
 
 def generate_random_string(length: int = 10):
@@ -62,9 +68,8 @@ def create_account(
     *,
     current_user: User,
     name: str = "account_name",
-    buying_power: Decimal = Decimal("1000"),
 ) -> Account:
-    account_in = AccountCreate(name=name, buying_power=buying_power)
+    account_in = AccountCreate(name=name)
     account = crud.accounts.create(session, account_in, current_user)
     if not account:
         raise ValueError("Account could not be created")
@@ -88,6 +93,55 @@ def create_stock(
     if not stock:
         raise ValueError("Stock could not be created")
     return stock
+
+
+def create_trade(
+    session: Session,
+    *,
+    account: Account,
+    stock: Stock,
+    type_: TradeType = TradeType.BUY,
+    quantity: Decimal = Decimal("1"),
+    price: Decimal = Decimal("100"),
+):
+    trade_in = TradeCreate(
+        type=type_, quantity=quantity, price=price, stock_id=stock.id
+    )
+    trade = crud.trades.create(session, trade_in, account)
+    if not trade:
+        raise ValueError("Trade could not be created")
+    return trade
+
+
+def delete_trade(session: Session, *, trade: Trade):
+    crud.trades.delete(session, trade)
+
+
+def create_ledger_item(
+    session: Session,
+    *,
+    account: Account,
+    type_: LedgerType = LedgerType.DEPOSIT,
+    amount: Decimal = Decimal("1000"),
+):
+    ledger_in = LedgerCreate(type=type_, amount=amount)
+    ledger = crud.ledger.create(session, ledger_in, account)
+    if not ledger:
+        raise ValueError("Ledger item could not be created")
+    return ledger
+
+
+def create_and_process_ledger(
+    session: Session,
+    *,
+    account: Account,
+    type_: LedgerType = LedgerType.DEPOSIT,
+    amount: Decimal = Decimal("1000"),
+):
+    ledger = create_ledger_item(session, account=account, type_=type_, amount=amount)
+    ledger_ctx = LedgerTransactionContext(session, account, type_, ledger)
+    process_transaction(ledger_ctx)
+    return ledger
 
 
 def get_token_headers(

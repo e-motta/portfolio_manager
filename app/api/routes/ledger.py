@@ -1,0 +1,89 @@
+from fastapi import APIRouter, Depends, status
+
+from app import crud
+from app.api.dependencies import (
+    CurrentUserDepAnnotated,
+    SessionDepAnnotated,
+    get_account_or_404,
+    get_ledger_item_or_404,
+)
+from app.api.utils import verify_ownership_or_403
+from app.core.config import settings
+from app.models.accounts import Account
+from app.models.contexts import LedgerTransactionContext
+from app.models.generic import Meta, ResponseMultiple, ResponseSingle
+from app.models.ledger import (
+    Ledger,
+    LedgerCreate,
+    LedgerRead,
+)
+from app.services import process_transaction, reprocess_transactions_excluding
+
+router = APIRouter(
+    prefix=f"/{settings.ACCOUNTS_ROUTE_STR}/{{account_id}}/{settings.LEDGER_ROUTE_STR}",
+    tags=[settings.LEDGER_ROUTE_STR],
+)
+
+
+@router.get("/", response_model=ResponseMultiple[LedgerRead])
+def read_ledger_list(
+    current_user: CurrentUserDepAnnotated,
+    account_db: Account = Depends(get_account_or_404),
+):
+    verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
+    return ResponseMultiple(
+        data=account_db.ledger, meta=Meta(count=len(account_db.ledger))
+    )
+
+
+@router.get("/{ledger_id}", response_model=ResponseSingle[LedgerRead])
+def read_ledger_detail(
+    current_user: CurrentUserDepAnnotated,
+    account_db: Account = Depends(get_account_or_404),
+    ledger_db: Ledger = Depends(get_ledger_item_or_404),
+):
+    verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
+    verify_ownership_or_403(ledger_db.account_id, account_db.id)
+    return ResponseSingle(data=ledger_db)
+
+
+@router.post(
+    "/",
+    status_code=status.HTTP_201_CREATED,
+    response_model=ResponseSingle[LedgerRead],
+)
+def create_ledger_item(
+    session: SessionDepAnnotated,
+    current_user: CurrentUserDepAnnotated,
+    ledger_in: LedgerCreate,
+    account_db: Account = Depends(get_account_or_404),
+):
+    verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
+    ledger_db = crud.ledger.create(session, ledger_in, account_db)
+
+    ctx = LedgerTransactionContext(
+        session=session,
+        account=account_db,
+        type=ledger_db.type,
+        ledger=ledger_db,
+    )
+    process_transaction(ctx)
+
+    return ResponseSingle(data=ledger_db, message="Ledger item created successfully")
+
+
+@router.delete("/{ledger_id}", response_model=ResponseSingle[None])
+def delete_ledger_item(
+    session: SessionDepAnnotated,
+    current_user: CurrentUserDepAnnotated,
+    account_db: Account = Depends(get_account_or_404),
+    ledger_db: Ledger = Depends(get_ledger_item_or_404),
+):
+    verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
+    verify_ownership_or_403(ledger_db.account_id, account_db.id)
+
+    reprocess_transactions_excluding(session, account_db, exclude=[ledger_db.id])
+
+    crud.ledger.delete(session, ledger_db)
+
+    return ResponseSingle(message="Ledger item deleted successfully")

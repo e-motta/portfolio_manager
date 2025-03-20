@@ -1,6 +1,18 @@
-from sqlmodel import Session
+from sqlmodel import Session, col, select
 
-from app.models import Account, Stock, StockCreate, StockUpdate
+from app.models.accounts import Account
+from app.models.stocks import Stock, StockCreate, StockServiceUpdate, StockUpdate
+
+
+def get_all_for_account(session: Session, account: Account):
+    statement = (
+        select(Stock)
+        .where(Stock.account_id == account.id)
+        .order_by(col(Stock.created_at))
+    )
+
+    stocks = session.exec(statement).all()
+    return stocks
 
 
 def create(session: Session, stock_in: StockCreate, account_db: Account):
@@ -11,9 +23,14 @@ def create(session: Session, stock_in: StockCreate, account_db: Account):
     return stock_db
 
 
-def update(session: Session, stock_db: Stock, stock_in: StockUpdate):
-    stock_data = stock_in.model_dump(exclude_unset=True)
-    stock_db.sqlmodel_update(stock_data)
+def update(
+    session: Session,
+    stock_db: Stock,
+    stock_in: StockUpdate | StockServiceUpdate | None = None,
+):
+    if stock_in:
+        stock_data = stock_in.model_dump(exclude_unset=True)
+        stock_db.sqlmodel_update(stock_data)
     session.add(stock_db)
     session.commit()
     session.refresh(stock_db)

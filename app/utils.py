@@ -1,4 +1,5 @@
 import re
+from decimal import Decimal
 
 from pydantic_core import PydanticCustomError
 
@@ -26,3 +27,7 @@ def validate_password(password: str):
         )
 
     return password
+
+
+def get_average_price(cost_basis: Decimal, position: Decimal):
+    return cost_basis / position if position != 0 else Decimal("0")

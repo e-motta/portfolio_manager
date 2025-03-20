@@ -6,15 +6,20 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
-from sqlmodel import Session, select
 from sqlalchemy.sql import func
+from sqlmodel import Session, select
 
 from app import crud
 from app.api.utils import verify_password
 from app.core.config import settings
 from app.core.db import engine
-from app.models import Account, Stock, TokenData, User
+from app.models.accounts import Account
+from app.models.auth import TokenData
 from app.models.generic import DetailItem
+from app.models.ledger import Ledger
+from app.models.stocks import Stock
+from app.models.trades import Trade
+from app.models.users import User
 
 
 def get_session() -> Generator[Session, None, None]:
@@ -146,3 +151,21 @@ def get_stock_or_404(session: SessionDepAnnotated, stock_id: int | UUID):
             status_code=status.HTTP_404_NOT_FOUND, detail="Stock not found"
         )
     return stock_db
+
+
+def get_trade_or_404(session: SessionDepAnnotated, trade_id: int | UUID):
+    trade_db = crud.get_by_id(Trade, session, trade_id)
+    if not trade_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found"
+        )
+    return trade_db
+
+
+def get_ledger_item_or_404(session: SessionDepAnnotated, ledger_id: int | UUID):
+    ledger_item_db = crud.get_by_id(Ledger, session, ledger_id)
+    if not ledger_item_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Ledger item not found"
+        )
+    return ledger_item_db

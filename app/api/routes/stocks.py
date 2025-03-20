@@ -9,8 +9,9 @@ from app.api.dependencies import (
 )
 from app.api.utils import verify_ownership_or_403
 from app.core.config import settings
-from app.models import Account, Stock, StockCreate, StockRead, StockUpdate
+from app.models.accounts import Account
 from app.models.generic import Meta, ResponseMultiple, ResponseSingle
+from app.models.stocks import Stock, StockCreate, StockRead, StockUpdate
 
 router = APIRouter(
     prefix=f"/{settings.ACCOUNTS_ROUTE_STR}/{{account_id}}/{settings.STOCKS_ROUTE_STR}",
