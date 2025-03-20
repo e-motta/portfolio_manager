@@ -1,7 +1,7 @@
 from sqlmodel import Session, col, select
 
 from app.models.accounts import Account
-from app.models.stocks import Stock
+from app.models.securities import Security
 from app.models.trades import Trade, TradeCreate, TradeUpdate
 
 
@@ -16,10 +16,10 @@ def get_all_for_account(session: Session, account: Account):
     return trades
 
 
-def get_all_for_stock(session: Session, account: Account, stock: Stock):
+def get_all_for_security(session: Session, account: Account, security: Security):
     statement = (
         select(Trade)
-        .where(Trade.account_id == account.id, Trade.stock_id == stock.id)
+        .where(Trade.account_id == account.id, Trade.security_id == security.id)
         .order_by(col(Trade.created_at))
     )
 

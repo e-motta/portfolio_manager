@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     USERS_ROUTE_STR: str = "users"
     ACCOUNTS_ROUTE_STR: str = "accounts"
-    STOCKS_ROUTE_STR: str = "stocks"
+    SECURITIES_ROUTE_STR: str = "securities"
     TRADES_ROUTE_STR: str = "trades"
     LEDGER_ROUTE_STR: str = "ledger"
 

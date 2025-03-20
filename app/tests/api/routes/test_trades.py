@@ -10,7 +10,7 @@ from app.models.trades import TradeType
 from app.tests.utils import (
     create_account,
     create_and_process_ledger,
-    create_stock,
+    create_security,
     create_trade,
     create_user,
     get_token_headers,
@@ -25,14 +25,14 @@ def test_transaction_unauthorized(
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
-    transaction = create_trade(session, account=account, stock=stock)
+    security = create_security(session, account=account)
+    transaction = create_trade(session, account=account, security=security)
 
     body = {
         "type": "buy",
         "quantity": 10,
         "price": 100,
-        "stock_id": str(stock.id),
+        "security_id": str(security.id),
     }
 
     r_get_detail = client.get(
@@ -63,14 +63,14 @@ def test_transaction_forbidden(
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
-    transaction = create_trade(session, account=account, stock=stock)
+    security = create_security(session, account=account)
+    transaction = create_trade(session, account=account, security=security)
 
     body = {
         "type": "buy",
         "quantity": 10,
         "price": 100,
-        "stock_id": str(stock.id),
+        "security_id": str(security.id),
     }
 
     r_get_detail = client.get(
@@ -101,8 +101,8 @@ def test_get_transaction_list(
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
-    create_trade(session, account=account, stock=stock)
+    security = create_security(session, account=account)
+    create_trade(session, account=account, security=security)
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
@@ -121,8 +121,8 @@ def test_get_transaction_detail(
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
-    transaction = create_trade(session, account=account, stock=stock)
+    security = create_security(session, account=account)
+    transaction = create_trade(session, account=account, security=security)
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
@@ -144,7 +144,7 @@ def test_create_trade(
     create_and_process_ledger(
         session, account=account, type_=LedgerType.DEPOSIT, amount=Decimal("1000")
     )
-    stock = create_stock(session, account=account)
+    security = create_security(session, account=account)
 
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
@@ -154,7 +154,7 @@ def test_create_trade(
         "type": "buy",
         "quantity": 10,
         "price": 100,
-        "stock_id": str(stock.id),
+        "security_id": str(security.id),
     }
 
     r = client.post(
@@ -167,7 +167,7 @@ def test_create_trade(
     assert data["id"]
 
 
-def test_create_trade_invalid_stock_id(
+def test_create_trade_invalid_security_id(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
     user = create_user(session, username=test_username, password=test_password)
@@ -180,7 +180,7 @@ def test_create_trade_invalid_stock_id(
         "type": "buy",
         "quantity": 10,
         "price": 100,
-        "stock_id": "invalid_id",
+        "security_id": "invalid_id",
     }
 
     r = client.post(
@@ -191,7 +191,7 @@ def test_create_trade_invalid_stock_id(
     assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-def test_create_trade_nonexistent_stock_id(
+def test_create_trade_nonexistent_security_id(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
     user = create_user(session, username=test_username, password=test_password)
@@ -204,7 +204,7 @@ def test_create_trade_nonexistent_stock_id(
         "type": "buy",
         "quantity": 10,
         "price": 100,
-        "stock_id": "60a2c086-f9c0-40e3-9e46-340c87e33835",
+        "security_id": "60a2c086-f9c0-40e3-9e46-340c87e33835",
     }
 
     r = client.post(
@@ -220,7 +220,7 @@ def test_create_trade_negative_values(
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
+    security = create_security(session, account=account)
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
@@ -229,7 +229,7 @@ def test_create_trade_negative_values(
         "type": "buy",
         "quantity": -1,
         "price": 100,
-        "stock_id": str(stock.id),
+        "security_id": str(security.id),
     }
 
     r_1 = client.post(
@@ -243,7 +243,7 @@ def test_create_trade_negative_values(
         "type": "buy",
         "quantity": 10,
         "price": -100,
-        "stock_id": str(stock.id),
+        "security_id": str(security.id),
     }
 
     r_2 = client.post(
@@ -259,7 +259,7 @@ def test_create_trade_invalid_type(
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
+    security = create_security(session, account=account)
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
@@ -268,7 +268,7 @@ def test_create_trade_invalid_type(
         "type": "invalid_type",
         "quantity": 10,
         "price": 100,
-        "stock_id": str(stock.id),
+        "security_id": str(security.id),
     }
 
     r = client.post(
@@ -284,8 +284,8 @@ def test_delete_transaction(
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
-    transaction = create_trade(session, account=account, stock=stock)
+    security = create_security(session, account=account)
+    transaction = create_trade(session, account=account, security=security)
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
@@ -308,15 +308,15 @@ def test_cannot_delete_transaction(
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
+    security = create_security(session, account=account)
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
 
     buy_transaction = create_trade(
-        session, account=account, stock=stock, type_=TradeType.BUY
+        session, account=account, security=security, type_=TradeType.BUY
     )
-    create_trade(session, account=account, stock=stock, type_=TradeType.SELL)
+    create_trade(session, account=account, security=security, type_=TradeType.SELL)
 
     r_delete = client.delete(
         f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRADES_ROUTE_STR}/{buy_transaction.id}",
@@ -340,8 +340,8 @@ def test_transactions_deleted_when_account_deleted(
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    stock = create_stock(session, account=account)
-    transaction = create_trade(session, account=account, stock=stock)
+    security = create_security(session, account=account)
+    transaction = create_trade(session, account=account, security=security)
 
     r_get = client.get(
         f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRADES_ROUTE_STR}/{transaction.id}",

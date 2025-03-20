@@ -32,24 +32,24 @@ def _sell_update_account(ctx: TradeTransactionContext):
     ctx.account.buying_power += ctx.trade.quantity * ctx.trade.price
 
 
-def _buy_update_stock(ctx: TradeTransactionContext):
-    fifo_lots = deque(ctx.stock.fifo_lots)
+def _buy_update_security(ctx: TradeTransactionContext):
+    fifo_lots = deque(ctx.security.fifo_lots)
 
-    new_cost_basis = ctx.stock.cost_basis + ctx.trade.quantity * ctx.trade.price
-    new_position = ctx.stock.position + ctx.trade.quantity
+    new_cost_basis = ctx.security.cost_basis + ctx.trade.quantity * ctx.trade.price
+    new_position = ctx.security.position + ctx.trade.quantity
 
     fifo_lots.append((str(ctx.trade.quantity), str(ctx.trade.price)))
-    ctx.stock.fifo_lots = list(fifo_lots)
+    ctx.security.fifo_lots = list(fifo_lots)
 
-    ctx.stock.cost_basis = new_cost_basis
-    ctx.stock.position = new_position
-    ctx.stock.average_price = get_average_price(new_cost_basis, new_position)
+    ctx.security.cost_basis = new_cost_basis
+    ctx.security.position = new_position
+    ctx.security.average_price = get_average_price(new_cost_basis, new_position)
 
 
-def _sell_update_stock(ctx: TradeTransactionContext):
-    fifo_lots = deque(ctx.stock.fifo_lots)
+def _sell_update_security(ctx: TradeTransactionContext):
+    fifo_lots = deque(ctx.security.fifo_lots)
 
-    if ctx.stock.position < ctx.trade.quantity:
+    if ctx.security.position < ctx.trade.quantity:
         raise ValueError(
             f"Quantity cannot be greater than current position for transaction of type '{ctx.trade.type.value}'"
         )
@@ -74,14 +74,14 @@ def _sell_update_stock(ctx: TradeTransactionContext):
                 str(first_lot_price),
             )
             sell_quantity = 0
-        ctx.stock.fifo_lots = list(fifo_lots)
+        ctx.security.fifo_lots = list(fifo_lots)
 
-    new_cost_basis = ctx.stock.cost_basis - total_cost_removed
-    new_position = ctx.stock.position - ctx.trade.quantity
+    new_cost_basis = ctx.security.cost_basis - total_cost_removed
+    new_position = ctx.security.position - ctx.trade.quantity
 
-    ctx.stock.cost_basis = new_cost_basis
-    ctx.stock.position = new_position
-    ctx.stock.average_price = get_average_price(new_cost_basis, new_position)
+    ctx.security.cost_basis = new_cost_basis
+    ctx.security.position = new_position
+    ctx.security.average_price = get_average_price(new_cost_basis, new_position)
 
 
 def _deposit_update_account(ctx: LedgerTransactionContext):
@@ -100,9 +100,9 @@ ACCOUNT_OPERATIONS: dict[TradeType | LedgerType, Callable] = {
     LedgerType.DEPOSIT: _deposit_update_account,
     LedgerType.WITHDRAWAL: _withdrawal_update_account,
 }
-STOCK_OPERATIONS: dict[TradeType | LedgerType, Callable] = {
-    TradeType.BUY: _buy_update_stock,
-    TradeType.SELL: _sell_update_stock,
+SECURITY_OPERATIONS: dict[TradeType | LedgerType, Callable] = {
+    TradeType.BUY: _buy_update_security,
+    TradeType.SELL: _sell_update_security,
 }
 
 
@@ -111,9 +111,9 @@ def process_transaction(ctx: TransactionContext):
         if ctx.account is not None:
             ACCOUNT_OPERATIONS[ctx.type](ctx)
             crud.accounts.update(ctx.session, ctx.account)
-        if ctx.stock is not None:
-            STOCK_OPERATIONS[ctx.type](ctx)
-            crud.stocks.update(ctx.session, ctx.stock)
+        if ctx.security is not None:
+            SECURITY_OPERATIONS[ctx.type](ctx)
+            crud.securities.update(ctx.session, ctx.security)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -131,8 +131,8 @@ def reprocess_transactions_excluding(
     """Reprocess all transactions for a given account, excluding some by id."""
     account.buying_power = Decimal("0")
 
-    stocks = list(crud.stocks.get_all_for_account(session, account))
-    for s in stocks:
+    securities = list(crud.securities.get_all_for_account(session, account))
+    for s in securities:
         s.position = Decimal("0")
         s.cost_basis = Decimal("0")
         s.average_price = Decimal("0")
@@ -148,7 +148,7 @@ def reprocess_transactions_excluding(
         if txn.id in exclude:
             continue
         if isinstance(txn, Trade):
-            ctx = TradeTransactionContext(session, account, txn.stock, txn.type, txn)
+            ctx = TradeTransactionContext(session, account, txn.security, txn.type, txn)
         if isinstance(txn, Ledger):
             ctx = LedgerTransactionContext(session, account, txn.type, txn)
         process_transaction(ctx)

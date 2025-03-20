@@ -5,7 +5,7 @@ from app.api.dependencies import (
     CurrentUserDepAnnotated,
     SessionDepAnnotated,
     get_account_or_404,
-    get_stock_or_404,
+    get_security_or_404,
     get_trade_or_404,
 )
 from app.api.utils import verify_ownership_or_403
@@ -56,14 +56,14 @@ def create_trade(
     account_db: Account = Depends(get_account_or_404),
 ):
     verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
-    stock_db = get_stock_or_404(session, trade_in.stock_id)
-    verify_ownership_or_403(stock_db.account_id, account_db.id)
+    security_db = get_security_or_404(session, trade_in.security_id)
+    verify_ownership_or_403(security_db.account_id, account_db.id)
     trade_db = crud.trades.create(session, trade_in, account_db)
 
     ctx = TradeTransactionContext(
         session=session,
         account=account_db,
-        stock=stock_db,
+        security=security_db,
         trade=trade_db,
         type=trade_db.type,
     )

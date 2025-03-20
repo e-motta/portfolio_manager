@@ -1,4 +1,4 @@
-from . import accounts, ledger, stocks, trades, users
+from . import accounts, ledger, securities, trades, users
 from .generic import *
 
-__all__ = ["accounts", "ledger", "stocks", "trades", "users"]
+__all__ = ["accounts", "ledger", "securities", "trades", "users"]

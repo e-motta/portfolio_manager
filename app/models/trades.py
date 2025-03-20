@@ -17,7 +17,7 @@ class TradeBase(SQLModel):
     type: TradeType
     quantity: Decimal = Field(max_digits=14, decimal_places=4, ge=0)
     price: Decimal = Field(max_digits=12, decimal_places=2, ge=0)
-    stock_id: UUID
+    security_id: UUID
 
 
 class Trade(BaseTableModel, TradeBase, table=True):
@@ -25,8 +25,8 @@ class Trade(BaseTableModel, TradeBase, table=True):
 
     account_id: UUID = Field(foreign_key="accounts.id", ondelete="CASCADE")
     account: "Account" = Relationship(back_populates="trades")  # type: ignore
-    stock_id: UUID = Field(foreign_key="stocks.id", ondelete="CASCADE")
-    stock: "Stock" = Relationship(back_populates="trades")  # type: ignore
+    security_id: UUID = Field(foreign_key="securities.id", ondelete="CASCADE")
+    security: "Security" = Relationship(back_populates="trades")  # type: ignore
 
 
 class TradeCreate(TradeBase):
@@ -46,4 +46,4 @@ class TradeUpdate(SQLModel):
         max_digits=14, decimal_places=4, default=None, ge=0
     )
     price: Decimal | None = Field(max_digits=12, decimal_places=2, default=None, ge=0)
-    stock_id: UUID | None = None
+    security_id: UUID | None = None

@@ -4,7 +4,7 @@ from sqlmodel import Session
 
 from app.models.accounts import Account
 from app.models.ledger import Ledger, LedgerType
-from app.models.stocks import Stock
+from app.models.securities import Security
 from app.models.trades import Trade, TradeType
 
 
@@ -12,7 +12,7 @@ from app.models.trades import Trade, TradeType
 class TradeTransactionContext:
     session: Session
     account: Account
-    stock: Stock
+    security: Security
     type: TradeType
     trade: Trade
     ledger: None = None
@@ -24,7 +24,7 @@ class LedgerTransactionContext:
     account: Account
     type: LedgerType
     ledger: Ledger
-    stock: None = None
+    security: None = None
     trade: None = None
 
 

@@ -17,7 +17,7 @@ from app.models.accounts import Account
 from app.models.auth import TokenData
 from app.models.generic import DetailItem
 from app.models.ledger import Ledger
-from app.models.stocks import Stock
+from app.models.securities import Security
 from app.models.trades import Trade
 from app.models.users import User
 
@@ -144,13 +144,13 @@ def get_account_or_404(session: SessionDepAnnotated, account_id: int | UUID):
     return account_db
 
 
-def get_stock_or_404(session: SessionDepAnnotated, stock_id: int | UUID):
-    stock_db = crud.get_by_id(Stock, session, stock_id)
-    if not stock_db:
+def get_security_or_404(session: SessionDepAnnotated, security_id: int | UUID):
+    security_db = crud.get_by_id(Security, session, security_id)
+    if not security_db:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Stock not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Security not found"
         )
-    return stock_db
+    return security_db
 
 
 def get_trade_or_404(session: SessionDepAnnotated, trade_id: int | UUID):

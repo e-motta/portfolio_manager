@@ -10,7 +10,7 @@ from app.core.config import settings
 from app.models.accounts import Account, AccountCreate
 from app.models.contexts import LedgerTransactionContext
 from app.models.ledger import LedgerCreate, LedgerType
-from app.models.stocks import Stock, StockCreate
+from app.models.securities import Security, SecurityCreate
 from app.models.trades import Trade, TradeCreate, TradeType
 from app.models.users import User, UserCreate
 from app.services import process_transaction
@@ -76,36 +76,36 @@ def create_account(
     return account
 
 
-def create_stock(
+def create_security(
     session: Session,
     *,
     account: Account,
-    name: str = "stock_name",
+    name: str = "security_name",
     symbol: str = "SYM",
     target_allocation: Decimal = Decimal(10),
-) -> Stock:
-    stock_in = StockCreate(
+) -> Security:
+    security_in = SecurityCreate(
         name=name,
         symbol=symbol,
         target_allocation=target_allocation,
     )
-    stock = crud.stocks.create(session, stock_in, account)
-    if not stock:
-        raise ValueError("Stock could not be created")
-    return stock
+    security = crud.securities.create(session, security_in, account)
+    if not security:
+        raise ValueError("Security could not be created")
+    return security
 
 
 def create_trade(
     session: Session,
     *,
     account: Account,
-    stock: Stock,
+    security: Security,
     type_: TradeType = TradeType.BUY,
     quantity: Decimal = Decimal("1"),
     price: Decimal = Decimal("100"),
 ):
     trade_in = TradeCreate(
-        type=type_, quantity=quantity, price=price, stock_id=stock.id
+        type=type_, quantity=quantity, price=price, security_id=security.id
     )
     trade = crud.trades.create(session, trade_in, account)
     if not trade:
