@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum
 from uuid import UUID
 
 from sqlmodel import Field, Relationship, SQLModel
@@ -45,3 +46,23 @@ class AccountRead(AccountBase):
 
 class AccountUpdate(SQLModel):
     name: str | None = None
+
+
+class AllocationPlanItem(SQLModel):
+    security_id: UUID
+    symbol: str
+    current_value: Decimal = Field(max_digits=18, decimal_places=8, ge=0)
+    effective_target_allocation: Decimal = Field(max_digits=12, decimal_places=2, ge=0)
+    ideal_value: Decimal = Field(max_digits=18, decimal_places=8, ge=0)
+    current_weight: Decimal = Field(max_digits=12, decimal_places=2, ge=0)
+    needed_investment: Decimal = Field(max_digits=18, decimal_places=8, ge=0)
+
+
+class AllocationStrategy(str, Enum):
+    SCALE = "scale"
+    FIXED = "fixed"
+
+
+class AllocationPlanCreate(SQLModel):
+    new_investment: Decimal = Field(max_digits=18, decimal_places=8, ge=0)
+    allocation_strategy: AllocationStrategy | None = None

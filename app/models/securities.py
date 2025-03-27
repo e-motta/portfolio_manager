@@ -21,6 +21,7 @@ class Security(BaseTableModel, SecurityBase, table=True):
     cost_basis: Decimal = Field(max_digits=18, decimal_places=8, default=0, ge=0)
     position: Decimal = Field(max_digits=14, decimal_places=4, default=0, ge=0)
     average_price: Decimal = Field(max_digits=18, decimal_places=8, default=0, ge=0)
+    latest_price: Decimal = Field(max_digits=18, decimal_places=8, default=0, ge=0)
 
     account_id: UUID = Field(foreign_key="accounts.id", ondelete="CASCADE")
     account: list["Account"] = Relationship(back_populates="securities")  # type: ignore
@@ -37,6 +38,7 @@ class SecurityRead(SecurityBase):
     cost_basis: Decimal
     position: Decimal
     average_price: Decimal
+    latest_price: Decimal
     id: UUID
     created_at: datetime
     updated_at: datetime
@@ -56,3 +58,4 @@ class SecurityServiceUpdate(SQLModel):
     cost_basis: Decimal = Field(max_digits=18, decimal_places=8, ge=0)
     position: Decimal = Field(max_digits=14, decimal_places=4, ge=0)
     average_price: Decimal = Field(max_digits=18, decimal_places=8, ge=0)
+    latest_price: Decimal = Field(max_digits=18, decimal_places=8, ge=0)

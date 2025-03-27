@@ -8,12 +8,12 @@ from sqlmodel import Session
 from app import crud
 from app.core.config import settings
 from app.models.accounts import Account, AccountCreate
-from app.models.contexts import LedgerTransactionContext
+from app.models.contexts import LedgerTransactionContext, TradeTransactionContext
 from app.models.ledger import LedgerCreate, LedgerType
 from app.models.securities import Security, SecurityCreate
 from app.models.trades import Trade, TradeCreate, TradeType
 from app.models.users import User, UserCreate
-from app.services import process_transaction
+from app.services.transactions import process_transaction
 
 
 def generate_random_string(length: int = 10):
@@ -110,6 +110,28 @@ def create_trade(
     trade = crud.trades.create(session, trade_in, account)
     if not trade:
         raise ValueError("Trade could not be created")
+    return trade
+
+
+def create_and_process_trade(
+    session: Session,
+    *,
+    account: Account,
+    security: Security,
+    type_: TradeType = TradeType.BUY,
+    quantity: Decimal = Decimal("1"),
+    price: Decimal = Decimal("100"),
+):
+    trade = create_trade(
+        session,
+        account=account,
+        security=security,
+        type_=type_,
+        quantity=quantity,
+        price=price,
+    )
+    ctx = TradeTransactionContext(session, account, security, type_, trade)
+    process_transaction(ctx)
     return trade
 
 

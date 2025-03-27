@@ -1,7 +1,10 @@
+from decimal import Decimal
+
 from fastapi import status
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
+from app import crud
 from app.core.config import settings
 from app.tests.utils import (
     create_account,
@@ -183,6 +186,30 @@ def test_create_security_negative_target_allocation(
     assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
+def test_create_security_excessive_target_allocation(
+    client: TestClient, session: Session, test_username: str, test_password: str
+):
+    user = create_user(session, username=test_username, password=test_password)
+    account = create_account(session, current_user=user)
+    create_security(session, account=account, target_allocation=Decimal("100"))
+    token_headers = get_token_headers(
+        client=client, username=test_username, password=test_password
+    )
+
+    body = {
+        "name": "new_name",
+        "symbol": "NEW",
+        "target_allocation": 10,
+    }
+
+    r = client.post(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/",
+        headers=token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
 def test_update_security(
     client: TestClient, session: Session, test_username: str, test_password: str
 ):
@@ -223,6 +250,33 @@ def test_update_security_negative_target_allocation(
 
     r = client.patch(
         f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
+        headers=token_headers,
+        json=body,
+    )
+    assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+def test_update_security_excessive_target_allocation(
+    client: TestClient, session: Session, test_username: str, test_password: str
+):
+    user = create_user(session, username=test_username, password=test_password)
+    account = create_account(session, current_user=user)
+    create_security(
+        session, account=account, symbol="ONE", target_allocation=Decimal("90")
+    )
+    new_sec = create_security(
+        session, account=account, symbol="TWO", target_allocation=Decimal("10")
+    )
+    token_headers = get_token_headers(
+        client=client, username=test_username, password=test_password
+    )
+
+    body = {
+        "target_allocation": 15,
+    }
+
+    r = client.patch(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{new_sec.id}",
         headers=token_headers,
         json=body,
     )
@@ -304,3 +358,17 @@ def test_securities_deleted_when_user_deleted(
         headers=admin_token_headers,
     )
     assert r_get_deleted.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_get_total_target_allocation(session: Session):
+    user = create_user(session)
+    account = create_account(session, current_user=user)
+    create_security(
+        session, account=account, symbol="ONE", target_allocation=Decimal("10")
+    )
+    create_security(
+        session, account=account, symbol="TWO", target_allocation=Decimal("20")
+    )
+    total = crud.securities.get_total_target_allocation(session, account)
+
+    assert total == Decimal("30")
