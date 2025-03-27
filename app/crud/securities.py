@@ -1,4 +1,6 @@
-from sqlmodel import Session, col, select
+from decimal import Decimal
+
+from sqlmodel import Session, col, func, select
 
 from app.models.accounts import Account
 from app.models.securities import (
@@ -7,6 +9,18 @@ from app.models.securities import (
     SecurityServiceUpdate,
     SecurityUpdate,
 )
+
+
+def get_total_target_allocation(session: Session, account: Account):
+    statement = select(
+        func.sum(Security.target_allocation).label("total_allocation")
+    ).where(Security.account_id == account.id)
+
+    result = session.exec(statement).one()
+
+    total_allocation = Decimal(result) if result is not None else Decimal(0)
+
+    return total_allocation
 
 
 def get_all_for_account(session: Session, account: Account):

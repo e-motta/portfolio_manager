@@ -1,50 +1,67 @@
-from fastapi import status
+from decimal import Decimal
+
+import pytest
+from fastapi import Response, status
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
-from app.tests.utils import create_account, create_user, get_token_headers
+from app.tests.utils import (
+    create_account,
+    create_security,
+    create_user,
+    get_token_headers,
+)
 
 
-def test_account_unauthorized(client: TestClient):
-    r_get_list = client.get(f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/")
-    assert r_get_list.status_code == status.HTTP_401_UNAUTHORIZED
-    r_get_detail = client.get(f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/1")
-    assert r_get_detail.status_code == status.HTTP_401_UNAUTHORIZED
-    r_post = client.post(f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/")
-    assert r_post.status_code == status.HTTP_401_UNAUTHORIZED
-    r_patch = client.patch(f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/1")
-    assert r_patch.status_code == status.HTTP_401_UNAUTHORIZED
-    r_delete = client.delete(f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/1")
-    assert r_delete.status_code == status.HTTP_401_UNAUTHORIZED
+@pytest.mark.parametrize(
+    "method, endpoint",
+    [
+        ("get", "/"),
+        ("get", "/1"),
+        ("post", "/"),
+        ("patch", "/1"),
+        ("delete", "/1"),
+        ("post", "/1/plan"),
+    ],
+)
+def test_account_unauthorized(client: TestClient, method: str, endpoint: str):
+    url = f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}{endpoint}"
+    response: Response = getattr(client, method)(url)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+@pytest.mark.parametrize(
+    "method, endpoint, data",
+    [
+        ("get", "/{account_id}", None),
+        ("patch", "/{account_id}", {"name": "new_name"}),
+        ("delete", "/{account_id}", None),
+        ("post", "/{account_id}/plan", {"new_investment": 1000}),
+    ],
+)
 def test_account_forbidden(
     client: TestClient,
     session: Session,
     normal_user_token_headers: dict[str, str],
     test_username: str,
     test_password: str,
+    method: str,
+    endpoint: str,
+    data: dict | None,
 ):
     user = create_user(session=session, username=test_username, password=test_password)
     account = create_account(session=session, current_user=user)
 
-    r_get_detail = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}",
-        headers=normal_user_token_headers,
-    )
-    assert r_get_detail.status_code == status.HTTP_403_FORBIDDEN
-    r_patch = client.patch(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}",
-        headers=normal_user_token_headers,
-        json={"name": "new_name"},
-    )
-    assert r_patch.status_code == status.HTTP_403_FORBIDDEN
-    r_delete = client.delete(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}",
-        headers=normal_user_token_headers,
-    )
-    assert r_delete.status_code == status.HTTP_403_FORBIDDEN
+    url = f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}{endpoint.format(account_id=account.id)}"
+
+    request_kwargs = {"headers": normal_user_token_headers}
+    if data is not None:
+        request_kwargs["json"] = data
+
+    response: Response = getattr(client, method)(url, **request_kwargs)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 def test_get_account_list(
@@ -181,3 +198,28 @@ def test_account_deleted_when_user_deleted(
         headers=admin_token_headers,
     )
     assert r_get_deleted.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_create_allocation_plan(
+    client: TestClient, session: Session, test_username: str, test_password: str
+):
+    user = create_user(session, username=test_username, password=test_password)
+    account = create_account(session, current_user=user)
+    token_headers = get_token_headers(
+        client=client, username=test_username, password=test_password
+    )
+    create_security(session, account=account, target_allocation=Decimal("100"))
+
+    body = {
+        "new_investment": 1000,
+    }
+
+    r = client.post(
+        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/plan",
+        headers=token_headers,
+        json=body,
+    )
+
+    assert r.status_code == status.HTTP_200_OK
+    data = r.json()["data"]
+    assert data[0]["needed_investment"] == "1000.00000000"

@@ -1,8 +1,8 @@
 """initial_migration
 
-Revision ID: 72841b517742
+Revision ID: 6af6dabcbdc4
 Revises:
-Create Date: 2025-03-20 08:30:00.907969
+Create Date: 2025-03-27 20:12:52.597996
 
 """
 
@@ -14,7 +14,7 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision: str = "72841b517742"
+revision: str = "6af6dabcbdc4"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -76,6 +76,7 @@ def upgrade() -> None:
         sa.Column("cost_basis", sa.Numeric(precision=18, scale=8), nullable=False),
         sa.Column("position", sa.Numeric(precision=14, scale=4), nullable=False),
         sa.Column("average_price", sa.Numeric(precision=18, scale=8), nullable=False),
+        sa.Column("latest_price", sa.Numeric(precision=18, scale=8), nullable=False),
         sa.Column("account_id", sa.Uuid(), nullable=False),
         sa.Column("fifo_lots", sa.JSON(), nullable=True),
         sa.ForeignKeyConstraint(["account_id"], ["accounts.id"], ondelete="CASCADE"),

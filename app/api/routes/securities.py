@@ -12,6 +12,7 @@ from app.core.config import settings
 from app.models.accounts import Account
 from app.models.generic import Meta, ResponseMultiple, ResponseSingle
 from app.models.securities import Security, SecurityCreate, SecurityRead, SecurityUpdate
+from app.services.allocation import validate_target_allocation
 
 router = APIRouter(
     prefix=f"/{settings.ACCOUNTS_ROUTE_STR}/{{account_id}}/{settings.SECURITIES_ROUTE_STR}",
@@ -53,6 +54,7 @@ def create_security(
     account_db: Account = Depends(get_account_or_404),
 ):
     verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
+    validate_target_allocation(account_db, security_in.target_allocation)
     security_db = crud.securities.create(session, security_in, account_db)
     return ResponseSingle(data=security_db, message="Security created successfully")
 
@@ -67,6 +69,10 @@ def update_security(
 ):
     verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
     verify_ownership_or_403(security_db.account_id, account_db.id)
+    if security_in.target_allocation is not None:
+        validate_target_allocation(
+            account_db, security_in.target_allocation, exclude=[security_db.id]
+        )
     crud.securities.update(session, security_db, security_in)
     return ResponseSingle(data=security_db, message="Security udpated successfully")
 

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from fastapi import APIRouter, Depends, status
 
 from app import crud
@@ -8,8 +10,16 @@ from app.api.dependencies import (
 )
 from app.api.utils import verify_ownership_or_403
 from app.core.config import settings
-from app.models.accounts import Account, AccountCreate, AccountRead, AccountUpdate
+from app.models.accounts import (
+    Account,
+    AccountCreate,
+    AccountRead,
+    AccountUpdate,
+    AllocationPlanCreate,
+    AllocationPlanItem,
+)
 from app.models.generic import Meta, ResponseMultiple, ResponseSingle
+from app.services.allocation import AccountManager, fetch_prices
 
 router = APIRouter(
     prefix=f"/{settings.ACCOUNTS_ROUTE_STR}", tags=[settings.ACCOUNTS_ROUTE_STR]
@@ -71,3 +81,16 @@ def delete_account(
     verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
     crud.accounts.delete(session, account_db)
     return ResponseSingle(message="Account deleted successfully")
+
+
+@router.post("/{account_id}/plan")
+def create_allocation_plan(
+    session: SessionDepAnnotated,
+    current_user: CurrentUserDepAnnotated,
+    allocation_plan_in: AllocationPlanCreate,
+    account_db: Account = Depends(get_account_or_404),
+) -> ResponseMultiple[AllocationPlanItem]:
+    verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
+    mgr = AccountManager(session, account_db, fetch_prices)
+    plan = mgr.get_allocation_plan(allocation_plan_in.new_investment)
+    return ResponseMultiple(data=plan, message="Allocation plan generated successfully")

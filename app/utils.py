@@ -1,5 +1,5 @@
 import re
-from decimal import Decimal
+from decimal import ROUND_HALF_EVEN, Decimal
 
 from pydantic_core import PydanticCustomError
 
@@ -31,3 +31,8 @@ def validate_password(password: str):
 
 def get_average_price(cost_basis: Decimal, position: Decimal):
     return cost_basis / position if position != 0 else Decimal("0")
+
+
+def round_decimal(value: Decimal, decimal_places: int):
+    rounding_factor = Decimal("1." + "0" * decimal_places)
+    return value.quantize(Decimal(rounding_factor), ROUND_HALF_EVEN)
