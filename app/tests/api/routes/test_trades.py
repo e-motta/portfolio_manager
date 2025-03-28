@@ -1,8 +1,10 @@
 from decimal import Decimal
 
-from fastapi import status
+import pytest
+from fastapi import Response, status
 from fastapi.testclient import TestClient
 from sqlmodel import Session
+from starlette import status
 
 from app.core.config import settings
 from app.models.ledger import LedgerType
@@ -17,16 +19,32 @@ from app.tests.utils import (
 )
 
 
+@pytest.mark.parametrize(
+    "method, endpoint, has_body",
+    [
+        ("get", "/{trade_id}", False),
+        ("get", "", False),
+        ("post", "", True),
+        ("delete", "/{trade_id}", False),
+    ],
+)
 def test_transaction_unauthorized(
     client: TestClient,
     session: Session,
     test_username: str,
     test_password: str,
+    method: str,
+    endpoint: str,
+    has_body: bool,
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
     security = create_security(session, account=account)
     transaction = create_trade(session, account=account, security=security)
+
+    url = f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRADES_ROUTE_STR}{endpoint}".replace(
+        "{trade_id}", str(transaction.id)
+    )
 
     body = {
         "type": "buy",
@@ -35,36 +53,42 @@ def test_transaction_unauthorized(
         "security_id": str(security.id),
     }
 
-    r_get_detail = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRADES_ROUTE_STR}/{transaction.id}",
-    )
-    assert r_get_detail.status_code == status.HTTP_401_UNAUTHORIZED
-    r_get_list = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRADES_ROUTE_STR}",
-    )
-    assert r_get_list.status_code == status.HTTP_401_UNAUTHORIZED
-    r_create = client.post(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRADES_ROUTE_STR}",
-        json=body,
-    )
-    assert r_create.status_code == status.HTTP_401_UNAUTHORIZED
-    r_delete = client.delete(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRADES_ROUTE_STR}/{transaction.id}",
-    )
-    assert r_delete.status_code == status.HTTP_401_UNAUTHORIZED
+    request_kwargs = {}
+    if has_body:
+        request_kwargs["json"] = body
+
+    response: Response = getattr(client, method)(url, **request_kwargs)
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+@pytest.mark.parametrize(
+    "method, endpoint, has_body",
+    [
+        ("get", "/{trade_id}", False),
+        ("get", "", False),
+        ("post", "", True),
+        ("delete", "/{trade_id}", False),
+    ],
+)
 def test_transaction_forbidden(
     client: TestClient,
     session: Session,
     test_username: str,
     test_password: str,
     normal_user_token_headers: dict[str, str],
+    method: str,
+    endpoint: str,
+    has_body: bool,
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
     security = create_security(session, account=account)
     transaction = create_trade(session, account=account, security=security)
+
+    url = f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRADES_ROUTE_STR}{endpoint}".replace(
+        "{trade_id}", str(transaction.id)
+    )
 
     body = {
         "type": "buy",
@@ -73,27 +97,13 @@ def test_transaction_forbidden(
         "security_id": str(security.id),
     }
 
-    r_get_detail = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRADES_ROUTE_STR}/{transaction.id}",
-        headers=normal_user_token_headers,
-    )
-    assert r_get_detail.status_code == status.HTTP_403_FORBIDDEN
-    r_get_list = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRADES_ROUTE_STR}",
-        headers=normal_user_token_headers,
-    )
-    assert r_get_list.status_code == status.HTTP_403_FORBIDDEN
-    r_create = client.post(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRADES_ROUTE_STR}",
-        headers=normal_user_token_headers,
-        json=body,
-    )
-    assert r_create.status_code == status.HTTP_403_FORBIDDEN
-    r_delete = client.delete(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.TRADES_ROUTE_STR}/{transaction.id}",
-        headers=normal_user_token_headers,
-    )
-    assert r_delete.status_code == status.HTTP_403_FORBIDDEN
+    request_kwargs = {"headers": normal_user_token_headers}
+    if has_body:
+        request_kwargs["json"] = body
+
+    response: Response = getattr(client, method)(url, **request_kwargs)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 def test_get_transaction_list(

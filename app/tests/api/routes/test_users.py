@@ -1,64 +1,53 @@
-from fastapi import status
+import pytest
+from fastapi import Response, status
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.core.config import settings
 from app.tests.utils import (
-    create_account,
     create_user,
     generate_random_password,
     generate_random_string,
 )
 
 
-def test_user_unauthorized(client: TestClient):
-    r_get_list = client.get(f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/")
-    assert r_get_list.status_code == status.HTTP_401_UNAUTHORIZED
-    r_get_detail = client.get(f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1")
-    assert r_get_detail.status_code == status.HTTP_401_UNAUTHORIZED
-    r_post = client.post(f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/")
-    assert r_post.status_code == status.HTTP_401_UNAUTHORIZED
-    r_patch = client.patch(f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1")
-    assert r_patch.status_code == status.HTTP_401_UNAUTHORIZED
-    r_delete = client.delete(f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1")
-    assert r_delete.status_code == status.HTTP_401_UNAUTHORIZED
-    r_recover = client.patch(
-        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1/recover"
-    )
-    assert r_recover.status_code == status.HTTP_401_UNAUTHORIZED
+@pytest.mark.parametrize(
+    "method, endpoint",
+    [
+        ("get", "/"),
+        ("get", "/1"),
+        ("post", "/"),
+        ("patch", "/1"),
+        ("delete", "/1"),
+        ("patch", "/1/recover"),
+    ],
+)
+def test_user_unauthorized(client: TestClient, method: str, endpoint: str):
+    url = f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}{endpoint}"
+    response: Response = getattr(client, method)(url)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_user_forbidden(client: TestClient, normal_user_token_headers: dict[str, str]):
-    r_get_list = client.get(
-        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
-        headers=normal_user_token_headers,
-    )
-    assert r_get_list.status_code == status.HTTP_403_FORBIDDEN
-    r_get_detail = client.get(
-        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1",
-        headers=normal_user_token_headers,
-    )
-    assert r_get_detail.status_code == status.HTTP_403_FORBIDDEN
-    r_post = client.post(
-        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/",
-        headers=normal_user_token_headers,
-    )
-    assert r_post.status_code == status.HTTP_403_FORBIDDEN
-    r_patch = client.patch(
-        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1",
-        headers=normal_user_token_headers,
-    )
-    assert r_patch.status_code == status.HTTP_403_FORBIDDEN
-    r_delete = client.delete(
-        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1",
-        headers=normal_user_token_headers,
-    )
-    assert r_delete.status_code == status.HTTP_403_FORBIDDEN
-    r_recover = client.patch(
-        f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}/1/recover",
-        headers=normal_user_token_headers,
-    )
-    assert r_recover.status_code == status.HTTP_403_FORBIDDEN
+@pytest.mark.parametrize(
+    "method, endpoint",
+    [
+        ("get", "/"),
+        ("get", "/1"),
+        ("post", "/"),
+        ("patch", "/1"),
+        ("delete", "/1"),
+        ("patch", "/1/recover"),
+    ],
+)
+def test_user_forbidden(
+    client: TestClient,
+    normal_user_token_headers: dict[str, str],
+    method: str,
+    endpoint: str,
+):
+    url = f"{settings.API_V1_STR}/{settings.USERS_ROUTE_STR}{endpoint}"
+    response: Response = getattr(client, method)(url, headers=normal_user_token_headers)
+    assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 def test_read_user_list(client: TestClient, admin_token_headers: dict[str, str]):
