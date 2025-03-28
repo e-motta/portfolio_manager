@@ -1,6 +1,7 @@
 from decimal import Decimal
 
-from fastapi import status
+import pytest
+from fastapi import Response, status
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
@@ -14,90 +15,83 @@ from app.tests.utils import (
 )
 
 
+@pytest.mark.parametrize(
+    "method, endpoint, has_body",
+    [
+        ("get", "/{security_id}", False),
+        ("get", "", False),
+        ("post", "", True),
+        ("patch", "/{security_id}", True),
+        ("delete", "/{security_id}", False),
+    ],
+)
 def test_security_unauthorized(
     client: TestClient,
     session: Session,
     test_username: str,
     test_password: str,
+    method: str,
+    endpoint: str,
+    has_body: bool,
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
     security = create_security(session, account=account)
 
-    body = {
-        "name": "new_name",
-        "symbol": "NEW",
-        "target_allocation": 50,
-    }
+    url = f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}{endpoint.format(security_id=security.id)}"
 
-    r_get_detail = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
-    )
-    assert r_get_detail.status_code == status.HTTP_401_UNAUTHORIZED
-    r_get_list = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}",
-    )
-    assert r_get_list.status_code == status.HTTP_401_UNAUTHORIZED
-    r_create = client.post(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}",
-        json=body,
-    )
-    assert r_create.status_code == status.HTTP_401_UNAUTHORIZED
-    r_udpate = client.patch(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
-        json=body,
-    )
-    assert r_udpate.status_code == status.HTTP_401_UNAUTHORIZED
-    r_delete = client.delete(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
-    )
-    assert r_delete.status_code == status.HTTP_401_UNAUTHORIZED
+    request_kwargs = {}
+    if has_body:
+        request_kwargs["json"] = {
+            "name": "new_name",
+            "symbol": "NEW",
+            "target_allocation": 50,
+        }
+
+    response: Response = getattr(client, method)(url, **request_kwargs)
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+@pytest.mark.parametrize(
+    "method, endpoint, has_body",
+    [
+        ("get", "/{security_id}", False),
+        ("get", "", False),
+        ("post", "", True),
+        ("patch", "/{security_id}", True),
+        ("delete", "/{security_id}", False),
+    ],
+)
 def test_security_forbidden(
     client: TestClient,
     session: Session,
     test_username: str,
     test_password: str,
     normal_user_token_headers: dict[str, str],
+    method: str,
+    endpoint: str,
+    has_body: bool,
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
     security = create_security(session, account=account)
 
-    body = {
-        "name": "new_name",
-        "symbol": "NEW",
-        "target_allocation": 50,
-    }
+    url = f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}{endpoint}".replace(
+        "{security_id}", str(security.id)
+    )
 
-    r_get_detail = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
-        headers=normal_user_token_headers,
-    )
-    assert r_get_detail.status_code == status.HTTP_403_FORBIDDEN
-    r_get_list = client.get(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}",
-        headers=normal_user_token_headers,
-    )
-    assert r_get_list.status_code == status.HTTP_403_FORBIDDEN
-    r_create = client.post(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}",
-        headers=normal_user_token_headers,
-        json=body,
-    )
-    assert r_create.status_code == status.HTTP_403_FORBIDDEN
-    r_udpate = client.patch(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
-        headers=normal_user_token_headers,
-        json=body,
-    )
-    assert r_udpate.status_code == status.HTTP_403_FORBIDDEN
-    r_delete = client.delete(
-        f"{settings.API_V1_STR}/{settings.ACCOUNTS_ROUTE_STR}/{account.id}/{settings.SECURITIES_ROUTE_STR}/{security.id}",
-        headers=normal_user_token_headers,
-    )
-    assert r_delete.status_code == status.HTTP_403_FORBIDDEN
+    request_kwargs: dict = {"headers": normal_user_token_headers}
+    if has_body:
+        request_kwargs["json"] = {
+            "name": "new_name",
+            "symbol": "NEW",
+            "target_allocation": 50,
+        }
+
+    response: Response = getattr(client, method)(url, **request_kwargs)
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 def test_get_security_list(
