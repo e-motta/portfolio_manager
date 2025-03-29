@@ -62,7 +62,7 @@ def validate_unique_email(session: SessionDepAnnotated, user_in: User):
                     detail=DetailItem(
                         type="email_in_use",
                         loc=["body", "email"],
-                        msg="Email already in user",
+                        msg="Email already in use",
                     ).model_dump(),
                 )
             )
