@@ -7,6 +7,7 @@ from fastapi import HTTPException, status
 from sqlmodel import Session
 
 from app import crud
+from app.core.logging_config import logger
 from app.models.accounts import Account, AllocationPlanItem, AllocationStrategy
 from app.models.generic import DetailItem
 from app.utils import round_decimal
@@ -31,28 +32,40 @@ def validate_target_allocation(
 
 
 def fetch_prices(symbols: list[str]) -> dict[str, Decimal]:
-    try:
-        tickers = yf.Tickers(" ".join(symbols))
-        bid_prices = {}
+    logger.info("Fetching securities data...")
+    tickers = yf.Tickers(" ".join(symbols))
+    bid_prices = {}
 
-        for symbol in symbols:
-            ticker = tickers.tickers.get(symbol)
-            if not ticker:
-                raise ValueError(f"Could not fetch data for {symbol}")
+    for symbol in symbols:
+        ticker = tickers.tickers.get(symbol)
+        if not ticker:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=DetailItem(
+                    type="external_service_error",
+                    loc=[],
+                    msg=f"Could not fetch data for {symbol}",
+                ).model_dump(),
+            )
 
-            info = ticker.info
-            if "bid" in info and info["bid"] is not None:
-                bid_prices[symbol] = Decimal(str(info["bid"]))
+        info = ticker.info
+        if "bid" in info and info["bid"] is not None:
+            bid_prices[symbol] = Decimal(str(info["bid"]))
+        else:
+            data = ticker.history(period="1d")
+            if not data.empty:
+                bid_prices[symbol] = Decimal(str(data["Close"].iloc[-1]))
             else:
-                data = ticker.history(period="1d")
-                if not data.empty:
-                    bid_prices[symbol] = Decimal(str(data["Close"].iloc[-1]))
-                else:
-                    raise ValueError(f"Could not fetch price for {symbol}")
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail=DetailItem(
+                        type="external_service_error",
+                        loc=[],
+                        msg=f"Could not fetch price for {symbol}",
+                    ).model_dump(),
+                )
 
-        return bid_prices
-    except Exception as e:
-        raise ValueError(f"Error fetching prices: {e}")
+    return bid_prices
 
 
 class AccountManager:
@@ -86,6 +99,7 @@ class AccountManager:
         new_investment_amount: Decimal,
         allocation_strategy: AllocationStrategy | None = None,
     ):
+        logger.info("Generating allocation plan...")
         self.update_security_prices()
         current_total_value = self.get_total_value()
         new_total = current_total_value + new_investment_amount
@@ -147,4 +161,5 @@ class AccountManager:
 
             plan.append(plan_item)
 
+        logger.info("Allocation plan successfully generated")
         return plan

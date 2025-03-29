@@ -7,6 +7,7 @@ from fastapi import HTTPException, status
 from sqlmodel import Session
 
 from app import crud
+from app.core.logging_config import logger
 from app.models.accounts import Account
 from app.models.contexts import (
     LedgerTransactionContext,
@@ -107,6 +108,7 @@ SECURITY_OPERATIONS: dict[TradeType | LedgerType, Callable] = {
 
 
 def process_transaction(ctx: TransactionContext):
+    logger.info(f"Processing '{ctx.type.value}' transaction...")
     try:
         if ctx.account is not None:
             ACCOUNT_OPERATIONS[ctx.type](ctx)
@@ -114,6 +116,7 @@ def process_transaction(ctx: TransactionContext):
         if ctx.security is not None:
             SECURITY_OPERATIONS[ctx.type](ctx)
             crud.securities.update(ctx.session, ctx.security)
+        logger.info(f"Transaction processed successfully")
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -129,6 +132,7 @@ def reprocess_transactions_excluding(
     session: Session, account: Account, exclude: list[UUID]
 ):
     """Reprocess all transactions for a given account, excluding some by id."""
+    logger.info(f"Reprocessing all transactions...")
     account.buying_power = Decimal("0")
 
     securities = list(crud.securities.get_all_for_account(session, account))
@@ -152,3 +156,5 @@ def reprocess_transactions_excluding(
         if isinstance(txn, Ledger):
             ctx = LedgerTransactionContext(session, account, txn.type, txn)
         process_transaction(ctx)
+
+    logger.info(f"All transactions reprocessed successfully")

@@ -8,3 +8,4 @@ htmlcov
 .venv
 .vscode
 local.db
+app.log
