@@ -208,7 +208,7 @@ def test_create_allocation_plan(
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
-    create_security(session, account=account, target_allocation=Decimal("100"))
+    create_security(session, account=account, target_allocation=Decimal("1"))
 
     body = {
         "new_investment": 1000,

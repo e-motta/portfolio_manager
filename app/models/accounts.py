@@ -5,7 +5,7 @@ from uuid import UUID
 
 from sqlmodel import Field, Relationship, SQLModel
 
-from app.models.generic import BaseTableModel
+from app.models.generic import BaseTableModel, get_decimal_field
 from app.models.ledger import Ledger
 from app.models.securities import Security
 from app.models.trades import Trade
@@ -20,9 +20,7 @@ class Account(BaseTableModel, AccountBase, table=True):
 
     user_id: UUID = Field(foreign_key="users.id", ondelete="CASCADE")
     user: "User" = Relationship(back_populates="accounts")  # type: ignore
-    buying_power: Decimal = Field(
-        max_digits=12, decimal_places=2, ge=0, default=Decimal("0")
-    )
+    buying_power: Decimal = get_decimal_field(default=Decimal("0"))
     securities: list[Security] = Relationship(
         back_populates="account", cascade_delete=True
     )
@@ -51,11 +49,11 @@ class AccountUpdate(SQLModel):
 class AllocationPlanItem(SQLModel):
     security_id: UUID
     symbol: str
-    current_value: Decimal = Field(max_digits=18, decimal_places=8, ge=0)
-    effective_target_allocation: Decimal = Field(max_digits=12, decimal_places=2, ge=0)
-    ideal_value: Decimal = Field(max_digits=18, decimal_places=8, ge=0)
-    current_weight: Decimal = Field(max_digits=12, decimal_places=2, ge=0)
-    needed_investment: Decimal = Field(max_digits=18, decimal_places=8, ge=0)
+    current_value: Decimal = get_decimal_field()
+    effective_target_allocation: Decimal = get_decimal_field(le=1)
+    ideal_value: Decimal = get_decimal_field()
+    current_weight: Decimal = get_decimal_field(le=1)
+    needed_investment: Decimal = get_decimal_field()
 
 
 class AllocationStrategy(str, Enum):
@@ -64,5 +62,5 @@ class AllocationStrategy(str, Enum):
 
 
 class AllocationPlanCreate(SQLModel):
-    new_investment: Decimal = Field(max_digits=18, decimal_places=8, ge=0)
+    new_investment: Decimal = get_decimal_field()
     allocation_strategy: AllocationStrategy | None = None

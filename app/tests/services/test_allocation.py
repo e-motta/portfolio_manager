@@ -36,10 +36,10 @@ def test_validate_target_allocation(session: Session):
     user = create_user(session)
     account = create_account(session, current_user=user)
     create_security(
-        session, account=account, symbol="ONE", target_allocation=Decimal("90")
+        session, account=account, symbol="ONE", target_allocation=Decimal("0.9")
     )
     new_sec_in = SecurityCreate(
-        name="Two", symbol="TWO", target_allocation=Decimal("10")
+        name="Two", symbol="TWO", target_allocation=Decimal("0.1")
     )
     validate_target_allocation(account, new_sec_in.target_allocation)
 
@@ -48,10 +48,10 @@ def test_validate_max_target_allocation_raises(session: Session):
     user = create_user(session)
     account = create_account(session, current_user=user)
     create_security(
-        session, account=account, symbol="ONE", target_allocation=Decimal("100")
+        session, account=account, symbol="ONE", target_allocation=Decimal("1")
     )
     new_sec_in = SecurityCreate(
-        name="Two", symbol="TWO", target_allocation=Decimal("10")
+        name="Two", symbol="TWO", target_allocation=Decimal("0.1")
     )
 
     with pytest.raises(HTTPException):
@@ -68,7 +68,7 @@ def test_portfolio_get_allocation_plan_negative_needed_investment_becomes_zero(
         session,
         account=account,
         symbol="ONE",
-        target_allocation=Decimal("30"),
+        target_allocation=Decimal("0.3"),
     )
     create_and_process_trade(
         session,
@@ -81,7 +81,7 @@ def test_portfolio_get_allocation_plan_negative_needed_investment_becomes_zero(
         session,
         account=account,
         symbol="TWO",
-        target_allocation=Decimal("70"),
+        target_allocation=Decimal("0.7"),
     )
     create_and_process_trade(
         session,
@@ -101,18 +101,18 @@ def test_portfolio_get_allocation_plan_negative_needed_investment_becomes_zero(
             security_id=sec_1.id,
             symbol=sec_1.symbol,
             current_value=Decimal("1000.00000000"),
-            effective_target_allocation=Decimal("30.00"),
+            effective_target_allocation=Decimal("0.3"),
             ideal_value=Decimal("900.00000000"),
-            current_weight=Decimal("50.00"),
+            current_weight=Decimal("0.5"),
             needed_investment=Decimal("0.00000000"),
         ),
         AllocationPlanItem(
             security_id=sec_2.id,
             symbol=sec_2.symbol,
             current_value=Decimal("1000.00000000"),
-            effective_target_allocation=Decimal("70.00"),
+            effective_target_allocation=Decimal("0.7"),
             ideal_value=Decimal("2100.00000000"),
-            current_weight=Decimal("50.00"),
+            current_weight=Decimal("0.5"),
             needed_investment=Decimal("1000.00000000"),
         ),
     ]
@@ -128,7 +128,7 @@ def test_portfolio_get_allocation_plan(session, fetch_prices_mock):
         session,
         account=account,
         symbol="ONE",
-        target_allocation=Decimal("30"),
+        target_allocation=Decimal("0.3"),
     )
     create_and_process_trade(
         session,
@@ -141,7 +141,7 @@ def test_portfolio_get_allocation_plan(session, fetch_prices_mock):
         session,
         account=account,
         symbol="TWO",
-        target_allocation=Decimal("70"),
+        target_allocation=Decimal("0.7"),
     )
     create_and_process_trade(
         session,
@@ -161,18 +161,18 @@ def test_portfolio_get_allocation_plan(session, fetch_prices_mock):
             security_id=sec_1.id,
             symbol=sec_1.symbol,
             current_value=Decimal("1000.00000000"),
-            effective_target_allocation=Decimal("30.00"),
+            effective_target_allocation=Decimal("0.3"),
             ideal_value=Decimal("1500.00000000"),
-            current_weight=Decimal("50.00"),
+            current_weight=Decimal("0.5"),
             needed_investment=Decimal("500.00000000"),
         ),
         AllocationPlanItem(
             security_id=sec_2.id,
             symbol=sec_2.symbol,
             current_value=Decimal("1000.00000000"),
-            effective_target_allocation=Decimal("70.00"),
+            effective_target_allocation=Decimal("0.7"),
             ideal_value=Decimal("3500.00000000"),
-            current_weight=Decimal("50.00"),
+            current_weight=Decimal("0.5"),
             needed_investment=Decimal("2500.00000000"),
         ),
     ]
@@ -190,7 +190,7 @@ def test_portfolio_get_allocation_plan_partial_allocation_scale(
         session,
         account=account,
         symbol="ONE",
-        target_allocation=Decimal("30"),
+        target_allocation=Decimal("0.3"),
     )
     create_and_process_trade(
         session,
@@ -203,7 +203,7 @@ def test_portfolio_get_allocation_plan_partial_allocation_scale(
         session,
         account=account,
         symbol="TWO",
-        target_allocation=Decimal("20"),
+        target_allocation=Decimal("0.2"),
     )
     create_and_process_trade(
         session,
@@ -225,18 +225,18 @@ def test_portfolio_get_allocation_plan_partial_allocation_scale(
             security_id=sec_1.id,
             symbol=sec_1.symbol,
             current_value=Decimal("1000.00000000"),
-            effective_target_allocation=Decimal("60.00"),
+            effective_target_allocation=Decimal("0.6"),
             ideal_value=Decimal("3000.00000000"),
-            current_weight=Decimal("50.00"),
+            current_weight=Decimal("0.5"),
             needed_investment=Decimal("2000.00000000"),
         ),
         AllocationPlanItem(
             security_id=sec_2.id,
             symbol=sec_2.symbol,
             current_value=Decimal("1000.00000000"),
-            effective_target_allocation=Decimal("40.00"),
+            effective_target_allocation=Decimal("0.4"),
             ideal_value=Decimal("2000.00000000"),
-            current_weight=Decimal("50.00"),
+            current_weight=Decimal("0.5"),
             needed_investment=Decimal("1000.00000000"),
         ),
     ]
@@ -254,7 +254,7 @@ def test_portfolio_get_allocation_plan_partial_allocation_fixed(
         session,
         account=account,
         symbol="ONE",
-        target_allocation=Decimal("30"),
+        target_allocation=Decimal("0.3"),
     )
     create_and_process_trade(
         session,
@@ -267,7 +267,7 @@ def test_portfolio_get_allocation_plan_partial_allocation_fixed(
         session,
         account=account,
         symbol="TWO",
-        target_allocation=Decimal("20"),
+        target_allocation=Decimal("0.2"),
     )
     create_and_process_trade(
         session,
@@ -287,18 +287,18 @@ def test_portfolio_get_allocation_plan_partial_allocation_fixed(
             security_id=sec_1.id,
             symbol=sec_1.symbol,
             current_value=Decimal("1000.00000000"),
-            effective_target_allocation=Decimal("30.00"),
+            effective_target_allocation=Decimal("0.3"),
             ideal_value=Decimal("1500.00000000"),
-            current_weight=Decimal("50.00"),
+            current_weight=Decimal("0.5"),
             needed_investment=Decimal("500.00000000"),
         ),
         AllocationPlanItem(
             security_id=sec_2.id,
             symbol=sec_2.symbol,
             current_value=Decimal("1000.00000000"),
-            effective_target_allocation=Decimal("20.00"),
+            effective_target_allocation=Decimal("0.2"),
             ideal_value=Decimal("1000.00000000"),
-            current_weight=Decimal("50.00"),
+            current_weight=Decimal("0.5"),
             needed_investment=Decimal("0.00000000"),
         ),
     ]
@@ -313,7 +313,7 @@ def test_portfolio_get_allocation_plan_partial_allocation_no_strategy(
     account = create_account(session, current_user=user)
     create_and_process_ledger(session, account=account, amount=Decimal("2000"))
     sec_1 = create_security(
-        session, account=account, symbol="ONE", target_allocation=Decimal("30")
+        session, account=account, symbol="ONE", target_allocation=Decimal("0.3")
     )
     create_and_process_trade(
         session,
@@ -323,7 +323,7 @@ def test_portfolio_get_allocation_plan_partial_allocation_no_strategy(
         price=Decimal("500"),
     )
     sec_2 = create_security(
-        session, account=account, symbol="TWO", target_allocation=Decimal("20")
+        session, account=account, symbol="TWO", target_allocation=Decimal("0.2")
     )
     create_and_process_trade(
         session,

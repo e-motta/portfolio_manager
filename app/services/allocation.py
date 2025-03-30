@@ -20,13 +20,13 @@ def validate_target_allocation(
         s.target_allocation for s in account.securities if s.id not in exclude
     )
     total_allocations += new_allocation
-    if total_allocations > Decimal("100"):
+    if total_allocations > Decimal("1"):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=DetailItem(
                 type="max_target_allocation",
                 loc=["body", "target_allocation"],
-                msg="Target allocations cannot exceed 100% in an account",
+                msg="Total target allocations cannot exceed 1 (100%) in an account",
             ).model_dump(),
         )
 
@@ -115,13 +115,13 @@ class AccountManager:
                 ).model_dump(),
             )
 
-        if total_target_allocation < Decimal("100") and allocation_strategy is None:
+        if total_target_allocation < Decimal("1") and allocation_strategy is None:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=DetailItem(
                     type="allocation_strategy_required",
                     loc=[],
-                    msg="The total allocation target must sum to 100% or an allocation strategy must be specified.",
+                    msg="The total allocation target must sum to 1 (100%) or an allocation strategy must be specified.",
                 ).model_dump(),
             )
 
@@ -130,15 +130,13 @@ class AccountManager:
         for sec in self.account.securities:
             target_allocation = sec.target_allocation
             if allocation_strategy == AllocationStrategy.SCALE:
-                target_allocation = target_allocation / (
-                    total_target_allocation / Decimal("100")
-                )
-            ideal_value = new_total * (target_allocation / Decimal("100"))
+                target_allocation = target_allocation / total_target_allocation
+            ideal_value = new_total * target_allocation
             current_value = sec.latest_price * sec.position
             needed_investment = max(Decimal("0"), ideal_value - current_value)
             needed_investment = min(needed_investment, new_investment_amount)
             current_weight = (
-                current_value / current_total_value * Decimal("100")
+                current_value / current_total_value
                 if current_total_value != 0
                 else Decimal("0")
             )

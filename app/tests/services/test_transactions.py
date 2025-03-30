@@ -14,6 +14,7 @@ from app.services.transactions import (
     reprocess_transactions_excluding,
 )
 from app.tests.utils import (
+    convert_fifo_lots_to_numeric,
     create_account,
     create_and_process_ledger,
     create_security,
@@ -105,9 +106,9 @@ def test_buy_at_different_price(session: Session):
     assert security.cost_basis == 2000  # 1000 + (5 * 200)
     assert security.position == 15  # 10 + 5
     assert security.average_price == Decimal("133.33333333")  # 2000 / 15
-    assert security.fifo_lots == [
-        ["10.0000", "100.00"],  # First lot (from first buy)
-        ["5.0000", "200.00"],  # Second lot (from second buy)
+    assert convert_fifo_lots_to_numeric(security.fifo_lots) == [
+        [10, 100],  # First lot (from first buy)
+        [5, 200],  # Second lot (from second buy)
     ]
 
 
@@ -175,9 +176,9 @@ def test_sell_some_security_fifo_applies(session: Session):
     assert security.cost_basis == 1500  # (10 * 100) + (5 * 200) - (5 * 100)
     assert security.position == 10  # 5 + 5
     assert security.average_price == 150  # 1500 / 10
-    assert security.fifo_lots == [
-        ["5.0000", "100.00"],  # Remaining from first buy
-        ["5.0000", "200.00"],  # Second lot still untouched
+    assert convert_fifo_lots_to_numeric(security.fifo_lots) == [
+        [5, 100],  # Remaining from first buy
+        [5, 200],  # Second lot still untouched
     ]
 
 
@@ -245,8 +246,8 @@ def test_sell_full_fifo_lot_and_part_next(session: Session):
     assert security.cost_basis == 600  # (5 * 200) - (5 * 100) - (2 * 200)
     assert security.position == 3  # 5 + 5 - 7
     assert security.average_price == 200  # 600 / 3
-    assert security.fifo_lots == [
-        ["3.0000", "200.00"],  # Remaining from second buy
+    assert convert_fifo_lots_to_numeric(security.fifo_lots) == [
+        [3, 200],  # Remaining from second buy
     ]
 
 
@@ -445,8 +446,8 @@ def test_buy_after_selling_all_security(session: Session):
     assert security.cost_basis == 1000
     assert security.position == 4
     assert security.average_price == 250
-    assert security.fifo_lots == [
-        ["4.0000", "250.00"],
+    assert convert_fifo_lots_to_numeric(security.fifo_lots) == [
+        [4, 250],
     ]
 
 
@@ -581,8 +582,8 @@ def test_delete_buy_trade(session: Session):
     assert account.buying_power == Decimal("9500")  # 10000 - (5 * 100)
     assert security.position == Decimal("5")
     assert security.cost_basis == Decimal("500")
-    assert security.fifo_lots == [
-        ["5.0000", "100.00"],
+    assert convert_fifo_lots_to_numeric(security.fifo_lots) == [
+        [5, 100],
     ]
 
     reprocess_transactions_excluding(session, account, exclude=[trade.id])
@@ -619,8 +620,8 @@ def test_delete_previous_buy_trade(session: Session):
     assert account.buying_power == Decimal("9500")  # 10000 - (5 * 100)
     assert security.position == Decimal("5")
     assert security.cost_basis == Decimal("500")
-    assert security.fifo_lots == [
-        ["5.0000", "100.00"],
+    assert convert_fifo_lots_to_numeric(security.fifo_lots) == [
+        [5, 100],
     ]
 
     trade_2 = create_trade(
@@ -643,8 +644,8 @@ def test_delete_previous_buy_trade(session: Session):
     assert account.buying_power == Decimal("8000")
     assert security.position == Decimal("10")
     assert security.cost_basis == Decimal("2000")
-    assert security.fifo_lots == [
-        ["10.0000", "200.00"],
+    assert convert_fifo_lots_to_numeric(security.fifo_lots) == [
+        [10, 200],
     ]
 
 
@@ -685,7 +686,9 @@ def test_delete_sell_trade(session: Session):
     assert account.buying_power == Decimal("9950")  # 10000 - 500 + 450
     assert security.position == Decimal("2")  # 5 - 3
     assert security.cost_basis == Decimal("200")
-    assert security.fifo_lots == [["2.0000", "100.00"]]
+    assert convert_fifo_lots_to_numeric(security.fifo_lots) == [
+        [2, 100],
+    ]
 
     reprocess_transactions_excluding(session, account, exclude=[trade_2.id])
     delete_trade(session, trade=trade_2)
@@ -693,7 +696,9 @@ def test_delete_sell_trade(session: Session):
     assert account.buying_power == Decimal("9500")  # 10000 - 500
     assert security.position == Decimal("5")
     assert security.cost_basis == Decimal("500")
-    assert security.fifo_lots == [["5.0000", "100.00"]]
+    assert convert_fifo_lots_to_numeric(security.fifo_lots) == [
+        [5, 100],
+    ]
 
 
 # todo: test service for ledger

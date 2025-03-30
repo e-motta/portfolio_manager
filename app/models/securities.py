@@ -5,23 +5,23 @@ from uuid import UUID
 from sqlalchemy import Column
 from sqlmodel import JSON, Field, Relationship, SQLModel
 
-from app.models.generic import BaseTableModel
+from app.models.generic import BaseTableModel, get_decimal_field
 from app.models.trades import Trade
 
 
 class SecurityBase(SQLModel):
     name: str
     symbol: str
-    target_allocation: Decimal = Field(max_digits=12, decimal_places=2, ge=0)
+    target_allocation: Decimal = get_decimal_field(le=1)
 
 
 class Security(BaseTableModel, SecurityBase, table=True):
     __tablename__: str = "securities"
 
-    cost_basis: Decimal = Field(max_digits=18, decimal_places=8, default=0, ge=0)
-    position: Decimal = Field(max_digits=14, decimal_places=4, default=0, ge=0)
-    average_price: Decimal = Field(max_digits=18, decimal_places=8, default=0, ge=0)
-    latest_price: Decimal = Field(max_digits=18, decimal_places=8, default=0, ge=0)
+    cost_basis: Decimal = get_decimal_field(default=0)
+    position: Decimal = get_decimal_field(default=0)
+    average_price: Decimal = get_decimal_field(default=0)
+    latest_price: Decimal = get_decimal_field(default=0)
 
     account_id: UUID = Field(foreign_key="accounts.id", ondelete="CASCADE")
     account: list["Account"] = Relationship(back_populates="securities")  # type: ignore
@@ -49,13 +49,11 @@ class SecurityRead(SecurityBase):
 class SecurityUpdate(SQLModel):
     symbol: str | None = None
     name: str | None = None
-    target_allocation: Decimal | None = Field(
-        max_digits=12, decimal_places=2, default=None, ge=0
-    )
+    target_allocation: Decimal | None = get_decimal_field(le=1, default=None)
 
 
 class SecurityServiceUpdate(SQLModel):
-    cost_basis: Decimal = Field(max_digits=18, decimal_places=8, ge=0)
-    position: Decimal = Field(max_digits=14, decimal_places=4, ge=0)
-    average_price: Decimal = Field(max_digits=18, decimal_places=8, ge=0)
-    latest_price: Decimal = Field(max_digits=18, decimal_places=8, ge=0)
+    cost_basis: Decimal = get_decimal_field()
+    position: Decimal = get_decimal_field()
+    average_price: Decimal = get_decimal_field()
+    latest_price: Decimal = get_decimal_field()

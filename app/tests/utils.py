@@ -82,7 +82,7 @@ def create_security(
     account: Account,
     name: str = "security_name",
     symbol: str = "SYM",
-    target_allocation: Decimal = Decimal(10),
+    target_allocation: Decimal = Decimal("0.1"),
 ) -> Security:
     security_in = SecurityCreate(
         name=name,
@@ -176,3 +176,7 @@ def get_token_headers(
     auth_token = response["access_token"]
     headers = {"Authorization": f"Bearer {auth_token}"}
     return headers
+
+
+def convert_fifo_lots_to_numeric(fifo_lots: list[list]):
+    return [[float(x) for x in lot] for lot in fifo_lots]

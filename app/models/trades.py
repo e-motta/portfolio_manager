@@ -5,7 +5,7 @@ from uuid import UUID
 
 from sqlmodel import Field, Relationship, SQLModel
 
-from app.models.generic import BaseTableModel
+from app.models.generic import BaseTableModel, get_decimal_field
 
 
 class TradeType(str, Enum):
@@ -15,8 +15,8 @@ class TradeType(str, Enum):
 
 class TradeBase(SQLModel):
     type: TradeType
-    quantity: Decimal = Field(max_digits=14, decimal_places=4, ge=0)
-    price: Decimal = Field(max_digits=12, decimal_places=2, ge=0)
+    quantity: Decimal = get_decimal_field(gt=0)
+    price: Decimal = get_decimal_field(gt=0)
     security_id: UUID
 
 
@@ -42,8 +42,6 @@ class TradeRead(TradeBase):
 
 
 class TradeUpdate(SQLModel):
-    quantity: Decimal | None = Field(
-        max_digits=14, decimal_places=4, default=None, ge=0
-    )
-    price: Decimal | None = Field(max_digits=12, decimal_places=2, default=None, ge=0)
+    quantity: Decimal | None = get_decimal_field(gt=0, default=None)
+    price: Decimal | None = get_decimal_field(gt=0, default=None)
     security_id: UUID | None = None
