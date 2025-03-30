@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -7,6 +8,15 @@ from pydantic import BaseModel
 from sqlalchemy import event
 from sqlalchemy.orm import Session
 from sqlmodel import Field, SQLModel
+
+
+def get_decimal_field(max_digits=18, decimal_places=8, ge=0, **extra):
+    return Field(
+        max_digits=max_digits,
+        decimal_places=decimal_places,
+        ge=ge,
+        **extra,
+    )
 
 
 class BaseTableModel(SQLModel):

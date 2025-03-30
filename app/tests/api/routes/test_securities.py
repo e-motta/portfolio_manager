@@ -86,7 +86,7 @@ def test_security_forbidden(
         request_kwargs["json"] = {
             "name": "new_name",
             "symbol": "NEW",
-            "target_allocation": 50,
+            "target_allocation": "0.5",
         }
 
     response: Response = getattr(client, method)(url, **request_kwargs)
@@ -144,7 +144,7 @@ def test_create_security(
     body = {
         "name": "new_name",
         "symbol": "NEW",
-        "target_allocation": 50,
+        "target_allocation": "0.5",
     }
 
     r = client.post(
@@ -185,7 +185,7 @@ def test_create_security_excessive_target_allocation(
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
-    create_security(session, account=account, target_allocation=Decimal("100"))
+    create_security(session, account=account, target_allocation=Decimal("1"))
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
@@ -239,7 +239,7 @@ def test_update_security_negative_target_allocation(
     )
 
     body = {
-        "target_allocation": -1,
+        "target_allocation": "-1",
     }
 
     r = client.patch(
@@ -256,17 +256,17 @@ def test_update_security_excessive_target_allocation(
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
     create_security(
-        session, account=account, symbol="ONE", target_allocation=Decimal("90")
+        session, account=account, symbol="ONE", target_allocation=Decimal("0.9")
     )
     new_sec = create_security(
-        session, account=account, symbol="TWO", target_allocation=Decimal("10")
+        session, account=account, symbol="TWO", target_allocation=Decimal("0.1")
     )
     token_headers = get_token_headers(
         client=client, username=test_username, password=test_password
     )
 
     body = {
-        "target_allocation": 15,
+        "target_allocation": "0.15",
     }
 
     r = client.patch(
@@ -358,11 +358,11 @@ def test_get_total_target_allocation(session: Session):
     user = create_user(session)
     account = create_account(session, current_user=user)
     create_security(
-        session, account=account, symbol="ONE", target_allocation=Decimal("10")
+        session, account=account, symbol="ONE", target_allocation=Decimal("0.1")
     )
     create_security(
-        session, account=account, symbol="TWO", target_allocation=Decimal("20")
+        session, account=account, symbol="TWO", target_allocation=Decimal("0.2")
     )
     total = crud.securities.get_total_target_allocation(session, account)
 
-    assert total == Decimal("30")
+    assert total == Decimal("0.3")

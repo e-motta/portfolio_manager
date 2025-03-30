@@ -5,7 +5,7 @@ from uuid import UUID
 
 from sqlmodel import Field, Relationship, SQLModel
 
-from app.models.generic import BaseTableModel
+from app.models.generic import BaseTableModel, get_decimal_field
 
 
 class LedgerType(str, Enum):
@@ -15,7 +15,7 @@ class LedgerType(str, Enum):
 
 class LedgerBase(SQLModel):
     type: LedgerType
-    amount: Decimal = Field(max_digits=12, decimal_places=2, ge=0)
+    amount: Decimal = get_decimal_field(gt=0)
 
 
 class Ledger(BaseTableModel, LedgerBase, table=True):
@@ -38,4 +38,4 @@ class LedgerRead(LedgerBase):
 
 
 class LedgerUpdate(SQLModel):
-    amount: Decimal | None = Field(max_digits=12, decimal_places=2, default=None, ge=0)
+    amount: Decimal | None = get_decimal_field(gt=0, default=None)
