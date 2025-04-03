@@ -6,7 +6,7 @@ class MainView:
     def __init__(self, auth_service: AuthService):
         self.auth_service = auth_service
 
-    def _render_login_form(self) -> None:
+    def render_login_form(self) -> None:
         """Render the login form."""
         with st.form("login_form"):
             username = st.text_input("Username")
@@ -15,12 +15,13 @@ class MainView:
 
             if submit:
                 if self.auth_service.login(username, password):
+                    st.session_state.authenticated = True
                     st.success("Logged in successfully!")
                     st.rerun()
                 else:
                     st.error("Invalid credentials")
 
-    def _render_register_form(self) -> None:
+    def render_register_form(self) -> None:
         """Render the registration form."""
         with st.form("register_form"):
             new_username = st.text_input("Username")
@@ -52,26 +53,3 @@ class MainView:
                         new_first_name,
                         new_last_name,
                     )
-
-    def _render_navigation(self, pages: dict) -> None:
-        """Render the navigation sidebar."""
-        st.sidebar.title("Navigation")
-        page = st.sidebar.radio("", list(pages.keys()))
-        pages[page]()
-
-        if st.sidebar.button("Logout"):
-            self.auth_service.logout()
-            st.rerun()
-
-    def render(self, pages: dict) -> None:
-        """Render the main application view."""
-        st.title("Portfolio Manager")
-
-        if not self.auth_service.is_authenticated():
-            tab1, tab2 = st.tabs(["Login", "Register"])
-            with tab1:
-                self._render_login_form()
-            with tab2:
-                self._render_register_form()
-        else:
-            self._render_navigation(pages)
