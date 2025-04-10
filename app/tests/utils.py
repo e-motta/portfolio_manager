@@ -130,7 +130,9 @@ def create_and_process_trade(
         quantity=quantity,
         price=price,
     )
-    ctx = TradeTransactionContext(session, account, security, type_, trade)
+    ctx = TradeTransactionContext(
+        session, account, security, type_, TradeCreate.model_validate(trade)
+    )
     process_transaction(ctx)
     return trade
 
@@ -161,7 +163,9 @@ def create_and_process_ledger(
     amount: Decimal = Decimal("1000"),
 ):
     ledger = create_ledger_item(session, account=account, type_=type_, amount=amount)
-    ledger_ctx = LedgerTransactionContext(session, account, type_, ledger)
+    ledger_ctx = LedgerTransactionContext(
+        session, account, type_, LedgerCreate.model_validate(ledger)
+    )
     process_transaction(ledger_ctx)
     return ledger
 

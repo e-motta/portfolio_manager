@@ -62,15 +62,16 @@ def create_ledger_item(
     account_db: Account = Depends(get_account_or_404),
 ):
     verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
-    ledger_db = crud.ledger.create(session, ledger_in, account_db)
 
     ctx = LedgerTransactionContext(
         session=session,
         account=account_db,
-        type=ledger_db.type,
-        ledger=ledger_db,
+        type=ledger_in.type,
+        ledger=ledger_in,
     )
     process_transaction(ctx)
+
+    ledger_db = crud.ledger.create(session, ledger_in, account_db)
 
     return ResponseSingle(data=ledger_db, message="Ledger item created successfully")
 

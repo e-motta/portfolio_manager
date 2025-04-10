@@ -15,8 +15,8 @@ from app.models.contexts import (
     TransactionContext,
 )
 from app.models.generic import DetailItem
-from app.models.ledger import Ledger, LedgerType
-from app.models.trades import Trade, TradeType
+from app.models.ledger import Ledger, LedgerType, LedgerCreate
+from app.models.trades import Trade, TradeType, TradeCreate
 from app.utils import get_average_price
 
 
@@ -152,9 +152,20 @@ def reprocess_transactions_excluding(
         if txn.id in exclude:
             continue
         if isinstance(txn, Trade):
-            ctx = TradeTransactionContext(session, account, txn.security, txn.type, txn)
+            ctx = TradeTransactionContext(
+                session,
+                account,
+                txn.security,
+                txn.type,
+                TradeCreate.model_validate(txn),
+            )
         if isinstance(txn, Ledger):
-            ctx = LedgerTransactionContext(session, account, txn.type, txn)
+            ctx = LedgerTransactionContext(
+                session,
+                account,
+                txn.type,
+                LedgerCreate.model_validate(txn),
+            )
         process_transaction(ctx)
 
     logger.info(f"All transactions reprocessed successfully")
