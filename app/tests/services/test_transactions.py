@@ -7,8 +7,8 @@ from sqlmodel import Session
 from app.models.contexts import (
     TradeTransactionContext,
 )
-from app.models.ledger import LedgerType
-from app.models.trades import TradeType
+from app.models.ledger import LedgerType, LedgerCreate
+from app.models.trades import TradeType, TradeCreate
 from app.services.transactions import (
     process_transaction,
     reprocess_transactions_excluding,
@@ -49,7 +49,7 @@ def test_buy_initial_security(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_1,
+        trade=TradeCreate.model_validate(trade_1),
         type=trade_1.type,
     )
     process_transaction(ctx)
@@ -80,7 +80,7 @@ def test_buy_at_different_price(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_1,
+        trade=TradeCreate.model_validate(trade_1),
         type=trade_1.type,
     )
     process_transaction(ctx_1)
@@ -98,7 +98,7 @@ def test_buy_at_different_price(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_2,
+        trade=TradeCreate.model_validate(trade_2),
         type=trade_2.type,
     )
     process_transaction(ctx_2)
@@ -133,7 +133,7 @@ def test_sell_some_security_fifo_applies(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_1,
+        trade=TradeCreate.model_validate(trade_1),
         type=trade_1.type,
     )
     process_transaction(ctx_1)
@@ -150,7 +150,7 @@ def test_sell_some_security_fifo_applies(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_2,
+        trade=TradeCreate.model_validate(trade_2),
         type=trade_2.type,
     )
     process_transaction(ctx_2)
@@ -168,7 +168,7 @@ def test_sell_some_security_fifo_applies(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_3,
+        trade=TradeCreate.model_validate(trade_3),
         type=trade_3.type,
     )
     process_transaction(ctx_3)
@@ -203,7 +203,7 @@ def test_sell_full_fifo_lot_and_part_next(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_1,
+        trade=TradeCreate.model_validate(trade_1),
         type=trade_1.type,
     )
     process_transaction(ctx_1)
@@ -220,7 +220,7 @@ def test_sell_full_fifo_lot_and_part_next(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_2,
+        trade=TradeCreate.model_validate(trade_2),
         type=trade_2.type,
     )
     process_transaction(ctx_2)
@@ -238,7 +238,7 @@ def test_sell_full_fifo_lot_and_part_next(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_3,
+        trade=TradeCreate.model_validate(trade_3),
         type=trade_3.type,
     )
     process_transaction(ctx_3)
@@ -272,7 +272,7 @@ def test_sell_all_remaining_security(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_1,
+        trade=TradeCreate.model_validate(trade_1),
         type=trade_1.type,
     )
     process_transaction(ctx_1)
@@ -289,7 +289,7 @@ def test_sell_all_remaining_security(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_2,
+        trade=TradeCreate.model_validate(trade_2),
         type=trade_2.type,
     )
     process_transaction(ctx_2)
@@ -307,7 +307,7 @@ def test_sell_all_remaining_security(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_3,
+        trade=TradeCreate.model_validate(trade_3),
         type=trade_3.type,
     )
     process_transaction(ctx_3)
@@ -339,7 +339,7 @@ def test_sell_more_than_available_security(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_1,
+        trade=TradeCreate.model_validate(trade_1),
         type=trade_1.type,
     )
     process_transaction(ctx_1)
@@ -357,7 +357,7 @@ def test_sell_more_than_available_security(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_2,
+        trade=TradeCreate.model_validate(trade_2),
         type=trade_2.type,
     )
     with pytest.raises(HTTPException):
@@ -385,7 +385,7 @@ def test_buy_after_selling_all_security(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_1,
+        trade=TradeCreate.model_validate(trade_1),
         type=trade_1.type,
     )
     process_transaction(ctx_1)
@@ -402,7 +402,7 @@ def test_buy_after_selling_all_security(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_2,
+        trade=TradeCreate.model_validate(trade_2),
         type=trade_2.type,
     )
     process_transaction(ctx_2)
@@ -420,7 +420,7 @@ def test_buy_after_selling_all_security(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_3,
+        trade=TradeCreate.model_validate(trade_3),
         type=trade_3.type,
     )
     process_transaction(ctx_3)
@@ -438,7 +438,7 @@ def test_buy_after_selling_all_security(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_4,
+        trade=TradeCreate.model_validate(trade_4),
         type=trade_4.type,
     )
     process_transaction(ctx_4)
@@ -471,7 +471,7 @@ def test_buy_trade_exceeds_buying_power(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade,
+        trade=TradeCreate.model_validate(trade),
         type=trade.type,
     )
     with pytest.raises(HTTPException):
@@ -504,7 +504,7 @@ def test_buy_trade_subtracts_from_buying_power(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade,
+        trade=TradeCreate.model_validate(trade),
         type=trade.type,
     )
     process_transaction(ctx)
@@ -532,7 +532,7 @@ def test_sell_trade_adds_to_buying_power(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_1,
+        trade=TradeCreate.model_validate(trade_1),
         type=trade_1.type,
     )
     process_transaction(ctx_1)
@@ -549,7 +549,7 @@ def test_sell_trade_adds_to_buying_power(session: Session):
         session=session,
         account=account,
         security=security,
-        trade=trade_2,
+        trade=TradeCreate.model_validate(trade_2),
         type=trade_2.type,
     )
     process_transaction(ctx_2)
@@ -575,7 +575,11 @@ def test_delete_buy_trade(session: Session):
     )
 
     ctx = TradeTransactionContext(
-        session, account=account, security=security, trade=trade, type=trade.type
+        session,
+        account=account,
+        security=security,
+        trade=TradeCreate.model_validate(trade),
+        type=trade.type,
     )
     process_transaction(ctx)
 
@@ -613,7 +617,11 @@ def test_delete_previous_buy_trade(session: Session):
     )
 
     ctx = TradeTransactionContext(
-        session, account=account, security=security, trade=trade_1, type=trade_1.type
+        session,
+        account=account,
+        security=security,
+        trade=TradeCreate.model_validate(trade_1),
+        type=trade_1.type,
     )
     process_transaction(ctx)
 
@@ -634,7 +642,11 @@ def test_delete_previous_buy_trade(session: Session):
     )
 
     ctx = TradeTransactionContext(
-        session, account=account, security=security, trade=trade_2, type=trade_2.type
+        session,
+        account=account,
+        security=security,
+        trade=TradeCreate.model_validate(trade_2),
+        type=trade_2.type,
     )
     process_transaction(ctx)
 
@@ -666,7 +678,11 @@ def test_delete_sell_trade(session: Session):
         price=Decimal("100"),
     )
     ctx = TradeTransactionContext(
-        session, account=account, security=security, trade=trade_1, type=trade_1.type
+        session,
+        account=account,
+        security=security,
+        trade=TradeCreate.model_validate(trade_1),
+        type=trade_1.type,
     )
     process_transaction(ctx)
 
@@ -679,7 +695,11 @@ def test_delete_sell_trade(session: Session):
         price=Decimal("150"),
     )
     ctx = TradeTransactionContext(
-        session, account=account, security=security, trade=trade_2, type=trade_2.type
+        session,
+        account=account,
+        security=security,
+        trade=TradeCreate.model_validate(trade_2),
+        type=trade_2.type,
     )
     process_transaction(ctx)
 

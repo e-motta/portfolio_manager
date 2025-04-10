@@ -61,16 +61,17 @@ def create_trade(
     verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
     security_db = get_security_or_404(session, trade_in.security_id)
     verify_ownership_or_403(security_db.account_id, account_db.id)
-    trade_db = crud.trades.create(session, trade_in, account_db)
 
     ctx = TradeTransactionContext(
         session=session,
         account=account_db,
         security=security_db,
-        trade=trade_db,
-        type=trade_db.type,
+        trade=trade_in,
+        type=trade_in.type,
     )
     process_transaction(ctx)
+
+    trade_db = crud.trades.create(session, trade_in, account_db)
 
     return ResponseSingle(data=trade_db, message="Transaction created successfully")
 
