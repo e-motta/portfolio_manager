@@ -18,7 +18,7 @@ class AuthRepository:
             token = response.json()["access_token"]
             st.session_state.token = token
             return True
-        except requests.exceptions.HTTPError as e:
+        except requests.exceptions.HTTPError:
             st.error("Invalid username or password")
             return False
         except Exception as e:

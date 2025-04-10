@@ -23,3 +23,21 @@ class AccountsRepository:
             return response
         except Exception as e:
             raise Exception(f"Error creating account: {str(e)}")
+
+    def update(self, account_id: str, name: str) -> dict:
+        """Update an existing account."""
+        try:
+            response = self.client.patch(
+                f"/accounts/{account_id}",
+                json={"name": name},
+            )
+            return response
+        except Exception as e:
+            raise Exception(f"Error updating account: {str(e)}")
+
+    def delete(self, account_id: str) -> dict:
+        """Delete an account."""
+        try:
+            return self.client.delete(f"/accounts/{account_id}")
+        except Exception as e:
+            raise Exception(f"Error deleting account: {str(e)}")

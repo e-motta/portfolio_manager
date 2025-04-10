@@ -14,6 +14,14 @@ class AccountsService:
         """Create a new account."""
         return self.repository.create(name)
 
+    def update_account(self, account_id: str, name: str) -> dict:
+        """Update an existing account."""
+        return self.repository.update(account_id, name)
+
+    def delete_account(self, account_id: str) -> dict:
+        """Delete an account."""
+        return self.repository.delete(account_id)
+
     def _transform_accounts_data(self, accounts: list[dict]) -> list[dict]:
         """Transform accounts data for display."""
         return [

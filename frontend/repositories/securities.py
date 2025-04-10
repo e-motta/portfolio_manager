@@ -12,7 +12,7 @@ class SecuritiesRepository:
         try:
             response = self.client.get(f"/accounts/{account_id}/securities")
             return response["data"]
-        except Exception as e:
+        except Exception:
             return []
 
     def create_security(
