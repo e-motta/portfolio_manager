@@ -2,10 +2,10 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
 from app.api.main import api_router
+from app.constants.messages import Messages
 from app.core.config import settings
 from app.core.logging_config import logger
 from app.models.generic import DetailItem
-from app.constants.messages import Messages
 
 app = FastAPI(debug=True)
 

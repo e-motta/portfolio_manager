@@ -7,11 +7,11 @@ from fastapi import HTTPException, status
 from sqlmodel import Session
 
 from app import crud
+from app.constants.messages import Messages
 from app.core.logging_config import logger
 from app.models.accounts import Account, AllocationPlanItem, AllocationStrategy
 from app.models.generic import DetailItem
 from app.utils import round_decimal
-from app.constants.messages import Messages
 
 
 def validate_target_allocation(

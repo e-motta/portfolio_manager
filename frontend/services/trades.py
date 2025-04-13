@@ -1,7 +1,7 @@
 from typing import Any
 
 from repositories.trades import TradesRepository
-from utils import format_currency, format_number, format_percentage
+from utils import format_currency, format_number
 
 
 class TradesService:

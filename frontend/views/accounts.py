@@ -1,12 +1,11 @@
-import streamlit as st
 from typing import Callable
 
+import streamlit as st
+from components.accounts import AccountEditForm
+from components.base_view import BaseView
+from components.data_table import DataForm, SelectableDataTable
 from services.accounts import AccountsService
 from utils import handle_error, require_auth
-
-from components.base_view import BaseView
-from components.data_table import SelectableDataTable, DataForm
-from components.accounts import AccountEditForm
 
 
 class AccountsTable(SelectableDataTable):

@@ -1,10 +1,9 @@
 import streamlit as st
-from api_client import APIClient
+from init import get_api_client
 from repositories.ledger import LedgerRepository
 from services.ledger import LedgerService
-from views.ledger import LedgerView
 from utils import require_auth
-from init import get_api_client
+from views.ledger import LedgerView
 
 st.set_page_config(
     page_title="Ledger",

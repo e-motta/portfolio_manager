@@ -1,9 +1,9 @@
 import streamlit as st
+from init import get_api_client
 from repositories.accounts import AccountsRepository
 from services.accounts import AccountsService
 from utils import require_auth
 from views.accounts import AccountsView
-from init import get_api_client
 
 st.set_page_config(
     page_title="Accounts",

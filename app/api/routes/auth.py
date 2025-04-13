@@ -4,9 +4,9 @@ from fastapi import APIRouter, HTTPException, status
 
 from app.api.dependencies import AuthenticateUserDepAnnotated
 from app.api.utils import create_access_token
+from app.constants.messages import Messages
 from app.core.config import settings
 from app.models.auth import Token
-from app.constants.messages import Messages
 from app.models.generic import DetailItem
 
 router = APIRouter(prefix="/auth", tags=["auth"])

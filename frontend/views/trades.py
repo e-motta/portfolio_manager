@@ -1,14 +1,12 @@
 import streamlit as st
-
+from components.base_view import BaseView
+from components.trades import TradeAddForm, TradesTable
 from repositories.accounts import AccountsRepository
 from repositories.securities import SecuritiesRepository
 from services.accounts import AccountsService
 from services.securities import SecuritiesService
 from services.trades import TradesService
 from utils import handle_error, require_auth
-
-from components.base_view import BaseView
-from components.trades import TradesTable, TradeAddForm
 
 
 class TradesView(BaseView[TradesService]):

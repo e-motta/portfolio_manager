@@ -1,6 +1,6 @@
 import streamlit as st
-from views.main import MainView
 from init import get_auth_service
+from views.main import MainView
 
 st.set_page_config(
     page_title="Portfolio Manager",

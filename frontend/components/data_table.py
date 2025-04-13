@@ -1,6 +1,7 @@
+from typing import Any, Callable, Literal
+
 import pandas as pd
 import streamlit as st
-from typing import Callable, Any, Literal
 from utils import handle_error
 
 

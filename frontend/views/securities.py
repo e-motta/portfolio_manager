@@ -1,12 +1,10 @@
 import streamlit as st
-
+from components.base_view import BaseView
+from components.securities import SecuritiesTable, SecurityAddForm, SecurityEditForm
 from repositories.accounts import AccountsRepository
 from services.accounts import AccountsService
 from services.securities import SecuritiesService
 from utils import handle_error, require_auth
-
-from components.base_view import BaseView
-from components.securities import SecuritiesTable, SecurityEditForm, SecurityAddForm
 
 
 class SecuritiesView(BaseView[SecuritiesService]):

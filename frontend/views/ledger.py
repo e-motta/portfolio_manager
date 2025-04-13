@@ -1,14 +1,10 @@
 import streamlit as st
-
+from components.base_view import BaseView
+from components.ledger import LedgerAddForm, LedgerTable
 from repositories.accounts import AccountsRepository
-from repositories.securities import SecuritiesRepository
 from services.accounts import AccountsService
-from services.securities import SecuritiesService
 from services.ledger import LedgerService
 from utils import handle_error, require_auth
-
-from components.base_view import BaseView
-from components.ledger import LedgerTable, LedgerAddForm
 
 
 class LedgerView(BaseView[LedgerService]):

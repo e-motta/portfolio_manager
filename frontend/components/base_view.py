@@ -1,5 +1,6 @@
+from typing import Callable, Generic, TypeVar
+
 import streamlit as st
-from typing import TypeVar, Generic, Callable
 from utils import require_auth
 
 # Generic type for service classes

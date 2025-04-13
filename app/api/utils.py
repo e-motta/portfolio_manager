@@ -5,9 +5,9 @@ import bcrypt
 import jwt
 from fastapi import HTTPException, status
 
+from app.constants.messages import Messages
 from app.core.config import settings
 from app.models.generic import DetailItem
-from app.constants.messages import Messages
 
 
 def verify_password(plain_password: str, hashed_password: str):

@@ -1,10 +1,9 @@
 import streamlit as st
-from api_client import APIClient
+from init import get_api_client
 from repositories.trades import TradesRepository
 from services.trades import TradesService
-from views.trades import TradesView
 from utils import require_auth
-from init import get_api_client
+from views.trades import TradesView
 
 st.set_page_config(
     page_title="Trades",

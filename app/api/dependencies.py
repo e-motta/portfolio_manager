@@ -11,6 +11,7 @@ from sqlmodel import Session, select
 
 from app import crud
 from app.api.utils import verify_password
+from app.constants.messages import Messages
 from app.core.config import settings
 from app.core.db import engine
 from app.models.accounts import Account
@@ -20,7 +21,6 @@ from app.models.ledger import Ledger
 from app.models.securities import Security
 from app.models.trades import Trade
 from app.models.users import User
-from app.constants.messages import Messages
 
 
 def get_session() -> Generator[Session, None, None]:

@@ -1,4 +1,3 @@
-from decimal import Decimal
 
 from fastapi import APIRouter, Depends, status
 
@@ -9,6 +8,7 @@ from app.api.dependencies import (
     get_account_or_404,
 )
 from app.api.utils import verify_ownership_or_403
+from app.constants.messages import Messages
 from app.core.config import settings
 from app.models.accounts import (
     Account,
@@ -20,7 +20,6 @@ from app.models.accounts import (
 )
 from app.models.generic import Meta, ResponseMultiple, ResponseSingle
 from app.services.allocation import AccountManager, fetch_prices
-from app.constants.messages import Messages
 
 router = APIRouter(
     prefix=f"/{settings.ACCOUNTS_ROUTE_STR}", tags=[settings.ACCOUNTS_ROUTE_STR]

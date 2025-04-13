@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
-
 from app import crud
 from app.api.dependencies import (
     CurrentUserDepAnnotated,
@@ -10,10 +9,10 @@ from app.api.dependencies import (
     validate_unique_email,
     validate_unique_username,
 )
-from app.core.config import settings
-from app.models.generic import Meta, ResponseMultiple, ResponseSingle, DetailItem
-from app.models.users import User, UserCreate, UserRead, UserRegister, UserUpdate
 from app.constants.messages import Messages
+from app.core.config import settings
+from app.models.generic import DetailItem, Meta, ResponseMultiple, ResponseSingle
+from app.models.users import User, UserCreate, UserRead, UserRegister, UserUpdate
 
 router = APIRouter(
     prefix=f"/{settings.USERS_ROUTE_STR}", tags=[settings.USERS_ROUTE_STR]

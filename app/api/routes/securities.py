@@ -8,12 +8,12 @@ from app.api.dependencies import (
     get_security_or_404,
 )
 from app.api.utils import verify_ownership_or_403
+from app.constants.messages import Messages
 from app.core.config import settings
 from app.models.accounts import Account
 from app.models.generic import Meta, ResponseMultiple, ResponseSingle
 from app.models.securities import Security, SecurityCreate, SecurityRead, SecurityUpdate
 from app.services.allocation import validate_target_allocation
-from app.constants.messages import Messages
 
 router = APIRouter(
     prefix=f"/{settings.ACCOUNTS_ROUTE_STR}/{{account_id}}/{settings.SECURITIES_ROUTE_STR}",

@@ -1,10 +1,9 @@
 import streamlit as st
+from init import get_api_client
 from repositories.securities import SecuritiesRepository
 from services.securities import SecuritiesService
 from utils import require_auth
 from views.securities import SecuritiesView
-from init import get_api_client
-
 
 st.set_page_config(
     page_title="Securities",

@@ -1,7 +1,7 @@
 from typing import Any
 
 from repositories.ledger import LedgerRepository
-from utils import format_currency, format_number, format_percentage
+from utils import format_currency
 
 
 class LedgerService:
