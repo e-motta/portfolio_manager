@@ -21,6 +21,7 @@ from app.services.transactions import (
     process_transaction,
     reprocess_transactions_excluding,
 )
+from app.constants.messages import Messages
 
 router = APIRouter(
     prefix=f"/{settings.ACCOUNTS_ROUTE_STR}/{{account_id}}/{settings.LEDGER_ROUTE_STR}",
@@ -73,7 +74,7 @@ def create_ledger_item(
 
     ledger_db = crud.ledger.create(session, ledger_in, account_db)
 
-    return ResponseSingle(data=ledger_db, message="Ledger item created successfully")
+    return ResponseSingle(data=ledger_db, message=Messages.Ledger.CREATED)
 
 
 @router.delete("/{ledger_id}", response_model=ResponseSingle[None])
@@ -90,4 +91,4 @@ def delete_ledger_item(
 
     crud.ledger.delete(session, ledger_db)
 
-    return ResponseSingle(message="Ledger item deleted successfully")
+    return ResponseSingle(message=Messages.Ledger.DELETED)

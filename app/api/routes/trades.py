@@ -18,6 +18,7 @@ from app.services.transactions import (
     process_transaction,
     reprocess_transactions_excluding,
 )
+from app.constants.messages import Messages
 
 router = APIRouter(
     prefix=f"/{settings.ACCOUNTS_ROUTE_STR}/{{account_id}}/{settings.TRADES_ROUTE_STR}",
@@ -73,7 +74,7 @@ def create_trade(
 
     trade_db = crud.trades.create(session, trade_in, account_db)
 
-    return ResponseSingle(data=trade_db, message="Transaction created successfully")
+    return ResponseSingle(data=trade_db, message=Messages.Trade.CREATED)
 
 
 @router.delete("/{trade_id}", response_model=ResponseSingle[None])
@@ -90,4 +91,4 @@ def delete_trade(
 
     crud.trades.delete(session, trade_db)
 
-    return ResponseSingle(message="Transaction deleted successfully")
+    return ResponseSingle(message=Messages.Trade.DELETED)

@@ -18,13 +18,16 @@ from app.models.generic import DetailItem
 from app.models.ledger import Ledger, LedgerType, LedgerCreate
 from app.models.trades import Trade, TradeType, TradeCreate
 from app.utils import get_average_price
+from app.constants.messages import Messages
 
 
 def _buy_update_account(ctx: TradeTransactionContext):
     total = ctx.trade.quantity * ctx.trade.price
     if total > ctx.account.buying_power:
         raise ValueError(
-            f"Total value cannot be greater than account buying power for transaction of type '{ctx.trade.type.value}'"
+            Messages.Transaction.Validation.value_cannot_be_greater_than_buying_power(
+                ctx.trade.type.value
+            )
         )
     ctx.account.buying_power -= total
 
@@ -52,7 +55,9 @@ def _sell_update_security(ctx: TradeTransactionContext):
 
     if ctx.security.position < ctx.trade.quantity:
         raise ValueError(
-            f"Quantity cannot be greater than current position for transaction of type '{ctx.trade.type.value}'"
+            Messages.Transaction.Validation.quantity_cannot_be_greater_than_position(
+                ctx.trade.type.value
+            )
         )
 
     sell_quantity = ctx.trade.quantity
@@ -91,7 +96,9 @@ def _deposit_update_account(ctx: LedgerTransactionContext):
 
 def _withdrawal_update_account(ctx: LedgerTransactionContext):
     if ctx.account.buying_power < ctx.ledger.amount:
-        raise ValueError("Withdrawn amount cannot be greater than account buying power")
+        raise ValueError(
+            Messages.Transaction.Validation.WITHDRAWN_AMOUNT_CANNOT_BE_GREATER_THAN_BUYING_POWER
+        )
     ctx.account.buying_power -= ctx.ledger.amount
 
 
@@ -108,7 +115,7 @@ SECURITY_OPERATIONS: dict[TradeType | LedgerType, Callable] = {
 
 
 def process_transaction(ctx: TransactionContext):
-    logger.info(f"Processing '{ctx.type.value}' transaction...")
+    logger.info(Messages.Transaction.processing(ctx.type.value))
     try:
         if ctx.account is not None:
             ACCOUNT_OPERATIONS[ctx.type](ctx)
@@ -116,7 +123,7 @@ def process_transaction(ctx: TransactionContext):
         if ctx.security is not None:
             SECURITY_OPERATIONS[ctx.type](ctx)
             crud.securities.update(ctx.session, ctx.security)
-        logger.info(f"Transaction processed successfully")
+        logger.info(Messages.Transaction.PROCESSED)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -132,7 +139,7 @@ def reprocess_transactions_excluding(
     session: Session, account: Account, exclude: list[UUID]
 ):
     """Reprocess all transactions for a given account, excluding some by id."""
-    logger.info(f"Reprocessing all transactions...")
+    logger.info(Messages.Transaction.REPROCESSING_ALL)
     account.buying_power = Decimal("0")
 
     securities = list(crud.securities.get_all_for_account(session, account))
@@ -168,4 +175,4 @@ def reprocess_transactions_excluding(
             )
         process_transaction(ctx)
 
-    logger.info(f"All transactions reprocessed successfully")
+    logger.info(Messages.Transaction.REPROCESSED_ALL)

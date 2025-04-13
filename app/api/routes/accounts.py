@@ -20,6 +20,7 @@ from app.models.accounts import (
 )
 from app.models.generic import Meta, ResponseMultiple, ResponseSingle
 from app.services.allocation import AccountManager, fetch_prices
+from app.constants.messages import Messages
 
 router = APIRouter(
     prefix=f"/{settings.ACCOUNTS_ROUTE_STR}", tags=[settings.ACCOUNTS_ROUTE_STR]
@@ -57,7 +58,7 @@ def create_account(
     account_in: AccountCreate,
 ):
     account_db = crud.accounts.create(session, account_in, current_user)
-    return ResponseSingle(data=account_db, message="Account created successfully")
+    return ResponseSingle(data=account_db, message=Messages.Account.CREATED)
 
 
 @router.patch("/{account_id}", response_model=ResponseSingle[AccountRead])
@@ -69,7 +70,7 @@ def update_account(
 ):
     verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
     crud.accounts.update(session, account_db, account_in)
-    return ResponseSingle(data=account_db, message="Account updated successfully")
+    return ResponseSingle(data=account_db, message=Messages.Account.UPDATED)
 
 
 @router.delete("/{account_id}", response_model=ResponseSingle[None])
@@ -80,7 +81,7 @@ def delete_account(
 ):
     verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
     crud.accounts.delete(session, account_db)
-    return ResponseSingle(message="Account deleted successfully")
+    return ResponseSingle(message=Messages.Account.DELETED)
 
 
 @router.post("/{account_id}/plan")
@@ -93,4 +94,4 @@ def create_allocation_plan(
     verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
     mgr = AccountManager(session, account_db, fetch_prices)
     plan = mgr.get_allocation_plan(allocation_plan_in.new_investment)
-    return ResponseMultiple(data=plan, message="Allocation plan generated successfully")
+    return ResponseMultiple(data=plan, message=Messages.Allocation.CREATED)

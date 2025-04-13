@@ -5,6 +5,7 @@ from app.api.main import api_router
 from app.core.config import settings
 from app.core.logging_config import logger
 from app.models.generic import DetailItem
+from app.constants.messages import Messages
 
 app = FastAPI(debug=True)
 
@@ -33,7 +34,7 @@ async def global_exception_handler(request: Request, exc: Exception):
             "detail": DetailItem(
                 type="unexpected_error",
                 loc=[],
-                msg="An unexpected error occurred. Please try again later.",
+                msg=Messages.General.INTERNAL_ERROR,
             ).model_dump(),
         },
     )
