@@ -2,7 +2,6 @@ from functools import wraps
 
 import streamlit as st
 
-
 FORMATTED_VALUES = {
     "username": "Username",
     "first_name": "First Name",
