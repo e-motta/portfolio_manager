@@ -49,7 +49,7 @@ router = APIRouter(
 )
 def register_user(session: SessionDepAnnotated, user_in: UserRegister):
     user = crud.users.register(session, user_in)
-    return ResponseSingle(data=user, message=Messages.User.CREATED)
+    return ResponseSingle(data=user, message=Messages.User.REGISTRATION_SUCCESSFUL)
 
 
 # Logged-in user
