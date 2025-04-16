@@ -1,6 +1,6 @@
-import streamlit as st
 from typing import Callable
 
+import streamlit as st
 from components.data_table import DataForm
 
 

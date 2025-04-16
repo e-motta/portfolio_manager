@@ -9,8 +9,9 @@ from app.api.dependencies import (
     validate_unique_email,
     validate_unique_username,
 )
+from app.constants.messages import Messages
 from app.core.config import settings
-from app.models.generic import Meta, ResponseMultiple, ResponseSingle
+from app.models.generic import DetailItem, Meta, ResponseMultiple, ResponseSingle
 from app.models.users import User, UserCreate, UserRead, UserRegister, UserUpdate
 
 router = APIRouter(
@@ -48,7 +49,7 @@ router = APIRouter(
 )
 def register_user(session: SessionDepAnnotated, user_in: UserRegister):
     user = crud.users.register(session, user_in)
-    return ResponseSingle(data=user, message="User created successfully")
+    return ResponseSingle(data=user, message=Messages.User.REGISTRATION_SUCCESSFUL)
 
 
 # Logged-in user
@@ -89,7 +90,7 @@ def update_user_me(
     user_in: UserUpdate,
 ):
     crud.users.update(session, current_user, user_in)
-    return ResponseSingle(data=current_user, message="User updated sucessfully")
+    return ResponseSingle(data=current_user, message=Messages.User.UPDATED)
 
 
 # Admin
@@ -141,7 +142,7 @@ def read_user_detail(user_db: User = Depends(get_user_or_404)):
 )
 def create_user(session: SessionDepAnnotated, user_in: UserCreate):
     user = crud.users.create(session, user_in)
-    return ResponseSingle(data=user, message="User created successfully")
+    return ResponseSingle(data=user, message=Messages.User.CREATED)
 
 
 @router.patch(
@@ -159,7 +160,7 @@ def update_user(
     user_db: User = Depends(get_user_or_404),
 ):
     crud.users.update(session, user_db, user_in)
-    return ResponseSingle(data=user_db, message="User updated successfully")
+    return ResponseSingle(data=user_db, message=Messages.User.UPDATED)
 
 
 @router.delete(
@@ -178,7 +179,7 @@ def delete_user(
     else:
         crud.users.soft_delete(session, user_db)
 
-    return ResponseSingle(message="User deleted successfully")
+    return ResponseSingle(message=Messages.User.DELETED)
 
 
 @router.patch(
@@ -192,8 +193,11 @@ def recover_soft_deletion(
 ):
     if user_db.deleted_at is None:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User is already active"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=DetailItem(
+                type="already_active", loc=[], msg=Messages.User.ALREADY_ACTIVE
+            ).model_dump(),
         )
 
     crud.users.recover(session, user_db)
-    return ResponseSingle(data=user_db, message="User recovered successfully")
+    return ResponseSingle(data=user_db, message=Messages.User.RECOVERED)

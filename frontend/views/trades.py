@@ -1,14 +1,12 @@
 import streamlit as st
-
+from components.base_view import BaseView
+from components.trades import TradeAddForm, TradesTable
 from repositories.accounts import AccountsRepository
 from repositories.securities import SecuritiesRepository
 from services.accounts import AccountsService
 from services.securities import SecuritiesService
 from services.trades import TradesService
 from utils import handle_error, require_auth
-
-from components.base_view import BaseView
-from components.trades import TradesTable, TradeAddForm
 
 
 class TradesView(BaseView[TradesService]):
@@ -25,7 +23,9 @@ class TradesView(BaseView[TradesService]):
             account_id: ID of the account to display trades for
         """
         try:
-            trades = self.service.get_account_trades(account_id)
+            result = self.service.get_account_trades(account_id)
+            trades = result.data
+
             if not trades:
                 self.render_info("No trades found in this account.")
                 return
@@ -37,7 +37,8 @@ class TradesView(BaseView[TradesService]):
             def on_delete(trade: dict) -> None:
                 try:
                     response = self.service.delete_trade(account_id, trade["id"])
-                    self.render_success(response["message"])
+                    if response.message:
+                        self.render_success(response.message)
                     st.rerun()
                 except Exception as e:
                     handle_error(e)
@@ -62,7 +63,12 @@ class TradesView(BaseView[TradesService]):
             # Get securities for the account
             securities_repo = SecuritiesRepository(self.service.repository.client)
             securities_service = SecuritiesService(securities_repo)
-            securities = securities_service.get_account_securities(account_id)
+            result = securities_service.get_account_securities(account_id)
+            securities = result.data
+
+            if not securities:
+                self.render_info("No securities found in this account.")
+                return
 
             # Initialize the add form component
             add_form = TradeAddForm()
@@ -75,7 +81,8 @@ class TradesView(BaseView[TradesService]):
                     response = self.service.create_trade(
                         account_id, trade_type, security_id, quantity, price
                     )
-                    self.render_success(response["message"])
+                    if response.message:
+                        self.render_success(response.message)
                     st.rerun()
                 except Exception as e:
                     handle_error(e)
@@ -111,7 +118,8 @@ class TradesView(BaseView[TradesService]):
         # Get accounts for the selector
         accounts_repo = AccountsRepository(self.service.repository.client)
         accounts_service = AccountsService(accounts_repo)
-        accounts = accounts_service.get_all_accounts()
+        result = accounts_service.get_all_accounts()
+        accounts = result.data
 
         # Render account selector or info message
         if not accounts:

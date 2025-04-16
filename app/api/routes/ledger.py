@@ -8,6 +8,7 @@ from app.api.dependencies import (
     get_ledger_item_or_404,
 )
 from app.api.utils import verify_ownership_or_403
+from app.constants.messages import Messages
 from app.core.config import settings
 from app.models.accounts import Account
 from app.models.contexts import LedgerTransactionContext
@@ -73,7 +74,7 @@ def create_ledger_item(
 
     ledger_db = crud.ledger.create(session, ledger_in, account_db)
 
-    return ResponseSingle(data=ledger_db, message="Ledger item created successfully")
+    return ResponseSingle(data=ledger_db, message=Messages.Ledger.CREATED)
 
 
 @router.delete("/{ledger_id}", response_model=ResponseSingle[None])
@@ -90,4 +91,4 @@ def delete_ledger_item(
 
     crud.ledger.delete(session, ledger_db)
 
-    return ResponseSingle(message="Ledger item deleted successfully")
+    return ResponseSingle(message=Messages.Ledger.DELETED)

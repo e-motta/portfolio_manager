@@ -1,5 +1,4 @@
 from decimal import Decimal
-from uuid import UUID
 
 import pytest
 from fastapi import HTTPException

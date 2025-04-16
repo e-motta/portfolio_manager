@@ -1,6 +1,7 @@
-import streamlit as st
 from typing import Callable
-from components.data_table import SelectableDataTable, DataForm
+
+import streamlit as st
+from components.data_table import DataForm, SelectableDataTable
 
 
 class LedgerTable(SelectableDataTable):

@@ -5,7 +5,9 @@ import bcrypt
 import jwt
 from fastapi import HTTPException, status
 
+from app.constants.messages import Messages
 from app.core.config import settings
+from app.models.generic import DetailItem
 
 
 def verify_password(plain_password: str, hashed_password: str):
@@ -42,5 +44,8 @@ def verify_ownership_or_403(
     has_access = child_owner_id == owner_id
     if not has_access:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=DetailItem(
+                type="forbidden", loc=[], msg=Messages.Auth.FORBIDDEN
+            ).model_dump(),
         )

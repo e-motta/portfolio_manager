@@ -31,7 +31,7 @@ class User(BaseTableModel, UserBase, table=True):
 
 
 class UserCreate(UserBase):
-    username: str = Field(max_length=settings.USERNAME_MAX_LENGTH)
+    username: str = Field(min_length=3, max_length=settings.USERNAME_MAX_LENGTH)
     email: EmailStr
     password: Annotated[str, AfterValidator(validate_password)]
 
@@ -51,15 +51,15 @@ class UserRead(UserBase):
 class UserRegister(SQLModel):
     username: str = Field(max_length=settings.USERNAME_MAX_LENGTH)
     email: EmailStr
-    first_name: str
-    last_name: str
+    first_name: str = Field(min_length=3)
+    last_name: str = Field(min_length=3)
     password: Annotated[str, AfterValidator(validate_password)]
 
 
 class UserUpdate(SQLModel):
     username: str | None = Field(max_length=settings.USERNAME_MAX_LENGTH, default=None)
     email: EmailStr | None = None
-    first_name: str | None = None
-    last_name: str | None = None
+    first_name: str | None = Field(min_length=3, default=None)
+    last_name: str | None = Field(min_length=3, default=None)
     password: Annotated[str, AfterValidator(validate_password)] | None = None
     is_admin: bool = False

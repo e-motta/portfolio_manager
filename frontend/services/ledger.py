@@ -1,36 +1,40 @@
 from typing import Any
 
 from repositories.ledger import LedgerRepository
-from utils import format_currency, format_number, format_percentage
+from results import ResultMultiple, ResultSingle
+from utils import format_currency
 
 
 class LedgerService:
     def __init__(self, repository: LedgerRepository):
         self.repository = repository
 
-    def get_account_ledger(self, account_id: str) -> list[dict[str, Any]]:
+    def get_account_ledger(self, account_id: str) -> ResultMultiple:
         """Get all ledger for a specific account with formatted data."""
-        ledger = self.repository.fetch_ledger(account_id)
-        return self._transform_ledger_data(ledger)
+        response = self.repository.fetch_ledger(account_id)
+        data = self._transform_ledger_data(response["data"])
+        return ResultMultiple(data=data, message=response["message"])
 
     def create_ledger_entry(
         self,
         account_id: str,
         ledger_entry_type: str,
         amount: float,
-    ) -> dict[str, Any]:
+    ) -> ResultSingle:
         """Create a new ledger_entry for an account."""
         ledger_entry_data = {
             "type": ledger_entry_type,
             "amount": amount,
         }
-        return self.repository.create_ledger_entry(account_id, ledger_entry_data)
+        response = self.repository.create_ledger_entry(account_id, ledger_entry_data)
+        return ResultSingle(data=response["data"], message=response["message"])
 
     def delete_ledger_entry(
         self, account_id: str, ledger_entry_id: str
-    ) -> dict[str, Any]:
+    ) -> ResultSingle:
         """Delete a ledger_entry from an account."""
-        return self.repository.delete_ledger_entry(account_id, ledger_entry_id)
+        response = self.repository.delete_ledger_entry(account_id, ledger_entry_id)
+        return ResultSingle(message=response["message"])
 
     def _transform_ledger_data(
         self, ledger: list[dict[str, Any]]

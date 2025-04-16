@@ -1,17 +1,19 @@
 from typing import Any
 
 from repositories.trades import TradesRepository
-from utils import format_currency, format_number, format_percentage
+from results import ResultMultiple, ResultSingle
+from utils import format_currency, format_number
 
 
 class TradesService:
     def __init__(self, repository: TradesRepository):
         self.repository = repository
 
-    def get_account_trades(self, account_id: str) -> list[dict[str, Any]]:
+    def get_account_trades(self, account_id: str) -> ResultMultiple:
         """Get all trades for a specific account with formatted data."""
-        trades = self.repository.fetch_trades(account_id)
-        return self._transform_trades_data(trades)
+        response = self.repository.fetch_trades(account_id)
+        data = self._transform_trades_data(response["data"])
+        return ResultMultiple(data=data, message=response["message"])
 
     def create_trade(
         self,
@@ -20,7 +22,7 @@ class TradesService:
         security_id: str,
         quantity: float,
         price: float,
-    ) -> dict[str, Any]:
+    ) -> ResultSingle:
         """Create a new trade for an account."""
         trade_data = {
             "type": trade_type,
@@ -28,15 +30,15 @@ class TradesService:
             "quantity": quantity,
             "price": price,
         }
-        return self.repository.create_trade(account_id, trade_data)
+        response = self.repository.create_trade(account_id, trade_data)
+        return ResultSingle(data=response["data"], message=response["message"])
 
-    def delete_trade(self, account_id: str, trade_id: str) -> dict[str, Any]:
+    def delete_trade(self, account_id: str, trade_id: str) -> ResultSingle:
         """Delete a trade from an account."""
-        return self.repository.delete_trade(account_id, trade_id)
+        response = self.repository.delete_trade(account_id, trade_id)
+        return ResultSingle(data=response["data"], message=response["message"])
 
-    def _transform_trades_data(
-        self, trades: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def _transform_trades_data(self, trades: list[dict]) -> list[dict]:
         """Transform trades data for display."""
         return [
             {

@@ -1,6 +1,7 @@
 from typing import Any
 
 from repositories.securities import SecuritiesRepository
+from results import ResultMultiple, ResultSingle
 from utils import format_currency, format_number, format_percentage
 
 
@@ -8,36 +9,38 @@ class SecuritiesService:
     def __init__(self, repository: SecuritiesRepository):
         self.repository = repository
 
-    def get_account_securities(self, account_id: str) -> list[dict[str, Any]]:
+    def get_account_securities(self, account_id: str) -> ResultMultiple:
         """Get all securities for a specific account with formatted data."""
-        securities = self.repository.fetch_securities(account_id)
-        return self._transform_securities_data(securities)
+        response = self.repository.fetch_securities(account_id)
+        data = self._transform_securities_data(response["data"])
+        return ResultMultiple(data=data, message=response["message"])
 
     def create_security(
         self, account_id: str, symbol: str, name: str, target_allocation: float
-    ) -> dict[str, Any]:
+    ) -> ResultSingle:
         """Create a new security for an account."""
         security_data = {
             "symbol": symbol,
             "name": name,
             "target_allocation": round(target_allocation / 100, 8),
         }
-        return self.repository.create_security(account_id, security_data)
+        result = self.repository.create_security(account_id, security_data)
+        return ResultSingle(data=result["data"], message=result["message"])
 
     def update_security(
         self, account_id: str, security_id: str, target_allocation: float
-    ) -> dict[str, Any]:
+    ) -> ResultSingle:
         """Update a security's target allocation."""
         security_data = {"target_allocation": round(target_allocation / 100, 8)}
-        return self.repository.update_security(account_id, security_id, security_data)
+        result = self.repository.update_security(account_id, security_id, security_data)
+        return ResultSingle(data=result["data"], message=result["message"])
 
-    def delete_security(self, account_id: str, security_id: str) -> dict[str, Any]:
+    def delete_security(self, account_id: str, security_id: str) -> ResultSingle:
         """Delete a security from an account."""
-        return self.repository.delete_security(account_id, security_id)
+        result = self.repository.delete_security(account_id, security_id)
+        return ResultSingle(message=result["message"])
 
-    def _transform_securities_data(
-        self, securities: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def _transform_securities_data(self, securities: list[dict]) -> list[dict]:
         """Transform securities data for display."""
         return [
             {

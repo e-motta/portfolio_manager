@@ -4,8 +4,10 @@ from fastapi import APIRouter, HTTPException, status
 
 from app.api.dependencies import AuthenticateUserDepAnnotated
 from app.api.utils import create_access_token
+from app.constants.messages import Messages
 from app.core.config import settings
 from app.models.auth import Token
+from app.models.generic import DetailItem
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -15,7 +17,9 @@ def login(user: AuthenticateUserDepAnnotated) -> Token:
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail=DetailItem(
+                type="unauthorized", loc=[], msg=Messages.Auth.INVALID_CREDENTIALS
+            ).model_dump(),
             headers={"WWW-Authenticate": "Bearer"},
         )
 

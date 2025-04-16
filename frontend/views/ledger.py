@@ -1,14 +1,10 @@
 import streamlit as st
-
+from components.base_view import BaseView
+from components.ledger import LedgerAddForm, LedgerTable
 from repositories.accounts import AccountsRepository
-from repositories.securities import SecuritiesRepository
 from services.accounts import AccountsService
-from services.securities import SecuritiesService
 from services.ledger import LedgerService
 from utils import handle_error, require_auth
-
-from components.base_view import BaseView
-from components.ledger import LedgerTable, LedgerAddForm
 
 
 class LedgerView(BaseView[LedgerService]):
@@ -25,7 +21,8 @@ class LedgerView(BaseView[LedgerService]):
             account_id: ID of the account to display ledger for
         """
         try:
-            ledger = self.service.get_account_ledger(account_id)
+            result = self.service.get_account_ledger(account_id)
+            ledger = result.data
             if not ledger:
                 self.render_info("No ledger entries found in this account.")
                 return
@@ -39,7 +36,8 @@ class LedgerView(BaseView[LedgerService]):
                     response = self.service.delete_ledger_entry(
                         account_id, ledger_entry["id"]
                     )
-                    self.render_success(response["message"])
+                    if response.message:
+                        self.render_success(response.message)
                     st.rerun()
                 except Exception as e:
                     handle_error(e)
@@ -70,7 +68,8 @@ class LedgerView(BaseView[LedgerService]):
                     response = self.service.create_ledger_entry(
                         account_id, ledger_entry_type, amount
                     )
-                    self.render_success(response["message"])
+                    if response.message:
+                        self.render_success(response.message)
                     st.rerun()
                 except Exception as e:
                     handle_error(e)
@@ -106,13 +105,12 @@ class LedgerView(BaseView[LedgerService]):
         # Get accounts for the selector
         accounts_repo = AccountsRepository(self.service.repository.client)
         accounts_service = AccountsService(accounts_repo)
-        accounts = accounts_service.get_all_accounts()
+        result = accounts_service.get_all_accounts()
+        accounts = result.data
 
         # Render account selector or info message
         if not accounts:
-            self.render_info(
-                "No accounts found. Create an account first to manage ledger."
-            )
+            self.render_info("No accounts found. Create an account to manage ledger.")
         else:
             # Render account selector and ledger for selected account
             selected_account = self.render_account_selector(accounts)

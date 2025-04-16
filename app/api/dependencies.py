@@ -11,6 +11,7 @@ from sqlmodel import Session, select
 
 from app import crud
 from app.api.utils import verify_password
+from app.constants.messages import Messages
 from app.core.config import settings
 from app.core.db import engine
 from app.models.accounts import Account
@@ -43,7 +44,7 @@ def validate_unique_username(session: SessionDepAnnotated, user_in: User):
                     detail=DetailItem(
                         type="username_in_use",
                         loc=["body", "username"],
-                        msg="Username already in use",
+                        msg=Messages.User.USERNAME_IN_USE,
                     ).model_dump(),
                 )
             )
@@ -62,7 +63,7 @@ def validate_unique_email(session: SessionDepAnnotated, user_in: User):
                     detail=DetailItem(
                         type="email_in_use",
                         loc=["body", "email"],
-                        msg="Email already in use",
+                        msg=Messages.User.EMAIL_IN_USE,
                     ).model_dump(),
                 )
             )
@@ -79,7 +80,9 @@ def get_current_user(
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail=DetailItem(
+            type="unauthorized", loc=[], msg=Messages.Auth.INVALID_CREDENTIALS
+        ).model_dump(),
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
@@ -119,7 +122,7 @@ AuthenticateUserDepAnnotated = Annotated[User, Depends(authenticate_user)]
 def is_admin(current_user: CurrentUserDepAnnotated):
     if not current_user.is_admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
+            status_code=status.HTTP_403_FORBIDDEN, detail=Messages.Auth.FORBIDDEN
         )
 
 
@@ -130,7 +133,7 @@ def get_user_or_404(session: SessionDepAnnotated, user_id: int | UUID):
     user_db = crud.get_by_id(User, session, user_id)
     if not user_db:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=Messages.User.NOT_FOUND
         )
     return user_db
 
@@ -139,7 +142,7 @@ def get_account_or_404(session: SessionDepAnnotated, account_id: int | UUID):
     account_db = crud.get_by_id(Account, session, account_id)
     if not account_db:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=Messages.Account.NOT_FOUND
         )
     return account_db
 
@@ -148,7 +151,7 @@ def get_security_or_404(session: SessionDepAnnotated, security_id: int | UUID):
     security_db = crud.get_by_id(Security, session, security_id)
     if not security_db:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Security not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=Messages.Security.NOT_FOUND
         )
     return security_db
 
@@ -157,7 +160,7 @@ def get_trade_or_404(session: SessionDepAnnotated, trade_id: int | UUID):
     trade_db = crud.get_by_id(Trade, session, trade_id)
     if not trade_db:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Trade not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=Messages.Trade.NOT_FOUND
         )
     return trade_db
 
@@ -166,6 +169,6 @@ def get_ledger_item_or_404(session: SessionDepAnnotated, ledger_id: int | UUID):
     ledger_item_db = crud.get_by_id(Ledger, session, ledger_id)
     if not ledger_item_db:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Ledger item not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=Messages.Ledger.NOT_FOUND
         )
     return ledger_item_db

@@ -1,12 +1,11 @@
-import streamlit as st
 from typing import Callable
 
+import streamlit as st
+from components.accounts import AccountEditForm
+from components.base_view import BaseView
+from components.data_table import DataForm, SelectableDataTable
 from services.accounts import AccountsService
 from utils import handle_error, require_auth
-
-from components.base_view import BaseView
-from components.data_table import SelectableDataTable, DataForm
-from components.accounts import AccountEditForm
 
 
 class AccountsTable(SelectableDataTable):
@@ -99,7 +98,8 @@ class AccountsView(BaseView[AccountsService]):
         Render the accounts table with edit and delete functionality.
         """
         try:
-            accounts = self.service.get_all_accounts()
+            result = self.service.get_all_accounts()
+            accounts = result.data
             if not accounts:
                 self.render_info("No accounts found. Create one to get started!")
                 return
@@ -114,8 +114,8 @@ class AccountsView(BaseView[AccountsService]):
             def on_delete(account: dict) -> None:
                 try:
                     response = self.service.delete_account(account["ID"])
-                    print(response["message"])
-                    self.render_success(response["message"])
+                    if response.message:
+                        self.render_success(response.message)
                     st.rerun()
                 except Exception as e:
                     handle_error(e)
@@ -149,7 +149,8 @@ class AccountsView(BaseView[AccountsService]):
                                 account_to_edit["ID"],
                                 new_name,
                             )
-                            self.render_success("Account updated successfully")
+                            if response.message:
+                                self.render_success(response.message)
                             del st.session_state.editing_account
                             st.rerun()
                         except Exception as e:
@@ -182,7 +183,8 @@ class AccountsView(BaseView[AccountsService]):
         def on_add(name: str) -> None:
             try:
                 response = self.service.create_account(name)
-                self.render_success(response["message"])
+                if response.message:
+                    self.render_success(response.message)
                 st.rerun()
             except Exception as e:
                 handle_error(e)

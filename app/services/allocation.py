@@ -7,6 +7,7 @@ from fastapi import HTTPException, status
 from sqlmodel import Session
 
 from app import crud
+from app.constants.messages import Messages
 from app.core.logging_config import logger
 from app.models.accounts import Account, AllocationPlanItem, AllocationStrategy
 from app.models.generic import DetailItem
@@ -26,13 +27,13 @@ def validate_target_allocation(
             detail=DetailItem(
                 type="max_target_allocation",
                 loc=["body", "target_allocation"],
-                msg="Total target allocations cannot exceed 1 (100%) in an account",
+                msg=Messages.Allocation.Validation.MAX_TARGET_ALLOCATION,
             ).model_dump(),
         )
 
 
 def fetch_prices(symbols: list[str]) -> dict[str, Decimal]:
-    logger.info("Fetching securities data...")
+    logger.info(Messages.Security.FETCHING)
     tickers = yf.Tickers(" ".join(symbols))
     bid_prices = {}
 
@@ -44,7 +45,7 @@ def fetch_prices(symbols: list[str]) -> dict[str, Decimal]:
                 detail=DetailItem(
                     type="external_service_error",
                     loc=[],
-                    msg=f"Could not fetch data for {symbol}",
+                    msg=Messages.Security.could_not_fetch_symbol(symbol),
                 ).model_dump(),
             )
 
@@ -61,7 +62,7 @@ def fetch_prices(symbols: list[str]) -> dict[str, Decimal]:
                     detail=DetailItem(
                         type="external_service_error",
                         loc=[],
-                        msg=f"Could not fetch price for {symbol}",
+                        msg=Messages.Security.could_not_fetch_symbol(symbol),
                     ).model_dump(),
                 )
 
@@ -99,7 +100,7 @@ class AccountManager:
         new_investment_amount: Decimal,
         allocation_strategy: AllocationStrategy | None = None,
     ):
-        logger.info("Generating allocation plan...")
+        logger.info(Messages.Allocation.CREATING)
         self.update_security_prices()
         current_total_value = self.get_total_value()
         new_total = current_total_value + new_investment_amount
@@ -111,7 +112,7 @@ class AccountManager:
                 detail=DetailItem(
                     type="target_allocation_required",
                     loc=[],
-                    msg="You need to specify a target allocation greater than 0 for at least one security.",
+                    msg=Messages.Allocation.Validation.AT_LEAST_ONE_GREATER_THAN_ZERO,
                 ).model_dump(),
             )
 
@@ -121,7 +122,7 @@ class AccountManager:
                 detail=DetailItem(
                     type="allocation_strategy_required",
                     loc=[],
-                    msg="The total allocation target must sum to 1 (100%) or an allocation strategy must be specified.",
+                    msg=Messages.Allocation.Validation.ALLOCATION_STRATEGY_REQUIRED,
                 ).model_dump(),
             )
 
@@ -159,5 +160,5 @@ class AccountManager:
 
             plan.append(plan_item)
 
-        logger.info("Allocation plan successfully generated")
+        logger.info(Messages.Allocation.CREATED)
         return plan

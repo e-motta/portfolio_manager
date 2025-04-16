@@ -8,6 +8,7 @@ from app.api.dependencies import (
     get_security_or_404,
 )
 from app.api.utils import verify_ownership_or_403
+from app.constants.messages import Messages
 from app.core.config import settings
 from app.models.accounts import Account
 from app.models.generic import Meta, ResponseMultiple, ResponseSingle
@@ -56,7 +57,7 @@ def create_security(
     verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
     validate_target_allocation(account_db, security_in.target_allocation)
     security_db = crud.securities.create(session, security_in, account_db)
-    return ResponseSingle(data=security_db, message="Security created successfully")
+    return ResponseSingle(data=security_db, message=Messages.Security.CREATED)
 
 
 @router.patch("/{security_id}", response_model=ResponseSingle[SecurityRead])
@@ -74,7 +75,7 @@ def update_security(
             account_db, security_in.target_allocation, exclude=[security_db.id]
         )
     crud.securities.update(session, security_db, security_in)
-    return ResponseSingle(data=security_db, message="Security udpated successfully")
+    return ResponseSingle(data=security_db, message=Messages.Security.UPDATED)
 
 
 @router.delete("/{security_id}", response_model=ResponseSingle[None])
@@ -87,4 +88,4 @@ def delete_security(
     verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
     verify_ownership_or_403(security_db.account_id, account_db.id)
     crud.securities.delete(session, security_db)
-    return ResponseSingle(message="Security deleted successfully")
+    return ResponseSingle(message=Messages.Security.DELETED)

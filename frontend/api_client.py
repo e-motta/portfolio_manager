@@ -16,9 +16,23 @@ class APIClient:
         response.raise_for_status()
         return response.json()
 
-    def post(self, endpoint: str, json: dict):
+    def post(
+        self,
+        endpoint: str,
+        json: dict | None = None,
+        data: dict | None = None,
+        headers: dict | None = None,
+    ):
+        kwargs = {}
+        if json is not None:
+            kwargs["json"] = json
+        if data is not None:
+            kwargs["data"] = data
+        if headers is not None:
+            self.headers.update(headers)
+
         response = requests.post(
-            f"{self.base_url}{endpoint}", headers=self.headers, json=json
+            f"{self.base_url}{endpoint}", headers=self.headers, **kwargs
         )
         response.raise_for_status()
         return response.json()
