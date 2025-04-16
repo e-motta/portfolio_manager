@@ -7,13 +7,13 @@ class TradesRepository:
     def __init__(self, client: APIClient):
         self.client = client
 
-    def fetch_trades(self, account_id: str) -> list[dict[str, Any]]:
+    def fetch_trades(self, account_id: str) -> dict:
         """Fetch all trades for a specific account."""
         try:
             response = self.client.get(f"/accounts/{account_id}/trades")
-            return response["data"]
-        except Exception:
-            return []
+            return response
+        except Exception as e:
+            raise Exception(f"Error fetching trades: {str(e)}")
 
     def create_trade(
         self, account_id: str, trade_data: dict[str, Any]

@@ -3,6 +3,53 @@ from functools import wraps
 import streamlit as st
 
 
+FORMATTED_VALUES = {
+    "username": "Username",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "email": "Email",
+    "password": "Password",
+}
+
+
+def _handle_missing(error):
+    value = error["loc"][1]
+    st.error(f"{FORMATTED_VALUES.get(value, value)} is required")
+
+
+def _handle_password_validation_error(error):
+    for rule in error["ctx"]["rules"]:
+        st.error(rule)
+
+
+def _handle_string_too_short(error):
+    value = error["loc"][-1]
+    length = error["ctx"]["min_length"]
+    st.error(
+        f"{FORMATTED_VALUES.get(value, value)} should have at least {length} characters"
+    )
+
+
+def _handle_string_too_long(error):
+    value = error["loc"][-1]
+    length = error["ctx"]["max_length"]
+    st.error(
+        f"{FORMATTED_VALUES.get(value, value)} should have at most {length} characters"
+    )
+
+
+def _handle_default(error):
+    st.error(error)
+
+
+SPECIAL_ERROR_HANDLERS = {
+    "missing": _handle_missing,
+    "password_validation_error": _handle_password_validation_error,
+    "string_too_short": _handle_string_too_short,
+    "string_too_long": _handle_string_too_long,
+}
+
+
 def handle_error(error):
     """Handle API errors and display appropriate messages to the user."""
     if hasattr(error, "response"):
@@ -11,7 +58,9 @@ def handle_error(error):
             if "detail" in error_data:
                 if isinstance(error_data["detail"], list):
                     for error_item in error_data["detail"]:
-                        st.error(error_item["msg"])
+                        SPECIAL_ERROR_HANDLERS.get(error_item["type"], _handle_default)(
+                            error_item
+                        )
                 else:
                     st.error(error_data["detail"]["msg"])
             else:

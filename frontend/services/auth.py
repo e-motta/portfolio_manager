@@ -8,7 +8,11 @@ class AuthService:
 
     def login(self, username: str, password: str) -> bool:
         """Attempt to log in a user with the given credentials."""
-        return self.repository.login(username, password)
+        response = self.repository.login(username, password)
+        if "access_token" in response:
+            st.session_state.token = response["access_token"]
+            return True
+        return False
 
     def register(
         self, username: str, email: str, password: str, first_name: str, last_name: str

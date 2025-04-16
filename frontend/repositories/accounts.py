@@ -5,11 +5,11 @@ class AccountsRepository:
     def __init__(self, client: APIClient):
         self.client = client
 
-    def fetch_all(self) -> list[dict]:
+    def fetch_all(self) -> dict:
         """Fetch all accounts from the API."""
         try:
             response = self.client.get("/accounts")
-            return response["data"]
+            return response
         except Exception as e:
             raise Exception(f"Error fetching accounts: {str(e)}")
 

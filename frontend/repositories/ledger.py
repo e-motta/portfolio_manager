@@ -7,13 +7,13 @@ class LedgerRepository:
     def __init__(self, client: APIClient):
         self.client = client
 
-    def fetch_ledger(self, account_id: str) -> list[dict[str, Any]]:
+    def fetch_ledger(self, account_id: str) -> dict:
         """Fetch all ledger for a specific account."""
         try:
             response = self.client.get(f"/accounts/{account_id}/ledger")
-            return response["data"]
-        except Exception:
-            return []
+            return response
+        except Exception as e:
+            raise Exception(f"Error fetching ledger: {str(e)}")
 
     def create_ledger_entry(
         self, account_id: str, ledger_entry_data: dict[str, Any]

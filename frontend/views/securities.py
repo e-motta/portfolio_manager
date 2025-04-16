@@ -21,7 +21,8 @@ class SecuritiesView(BaseView[SecuritiesService]):
             account_id: ID of the account to display securities for
         """
         try:
-            securities = self.service.get_account_securities(account_id)
+            result = self.service.get_account_securities(account_id)
+            securities = result.data
             if not securities:
                 self.render_info("No securities found in this account.")
                 return
@@ -36,7 +37,8 @@ class SecuritiesView(BaseView[SecuritiesService]):
             def on_delete(security: dict) -> None:
                 try:
                     response = self.service.delete_security(account_id, security["id"])
-                    self.render_success(response["message"])
+                    if response.message:
+                        self.render_success(response.message)
                     st.rerun()
                 except Exception as e:
                     handle_error(e)
@@ -71,7 +73,8 @@ class SecuritiesView(BaseView[SecuritiesService]):
                                 security_to_edit["id"],
                                 new_allocation,
                             )
-                            self.render_success(response["message"])
+                            if response.message:
+                                self.render_success(response.message)
                             del st.session_state.editing_security
                             st.rerun()
                         except Exception as e:
@@ -109,7 +112,8 @@ class SecuritiesView(BaseView[SecuritiesService]):
                 response = self.service.create_security(
                     account_id, symbol, name, allocation
                 )
-                self.render_success(response["message"])
+                if response.message:
+                    self.render_success(response.message)
                 st.rerun()
             except Exception as e:
                 handle_error(e)
@@ -142,7 +146,8 @@ class SecuritiesView(BaseView[SecuritiesService]):
         # Get accounts for the selector
         accounts_repo = AccountsRepository(self.service.repository.client)
         accounts_service = AccountsService(accounts_repo)
-        accounts = accounts_service.get_all_accounts()
+        result = accounts_service.get_all_accounts()
+        accounts = result.data
 
         # Render account selector or info message
         if not accounts:
