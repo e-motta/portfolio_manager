@@ -202,12 +202,16 @@ class DataForm:
                                 cancel_label or "Cancel", use_container_width=True
                             )
                     else:
-                        # Single button layout
-                        submit = st.form_submit_button(
-                            submit_label,
-                            type=submit_button_type,
-                            use_container_width=True if use_columns else False,
-                        )
+                        # Single button layout with space for spinner
+                        button_col, spinner_col = st.columns([1, 4])
+                        with button_col:
+                            submit = st.form_submit_button(
+                                submit_label,
+                                type=submit_button_type,
+                                use_container_width=True,
+                            )
+                        # Store the spinner column in session state for later use
+                        st.session_state["spinner_placeholder"] = spinner_col
 
                     # Handle button clicks
                     if submit:

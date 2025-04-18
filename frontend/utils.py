@@ -37,6 +37,10 @@ def _handle_string_too_long(error):
     )
 
 
+def _handle_external_service_error(error):
+    st.error("SOme error")
+
+
 def _handle_default(error):
     st.error(error)
 
@@ -46,6 +50,7 @@ SPECIAL_ERROR_HANDLERS = {
     "password_validation_error": _handle_password_validation_error,
     "string_too_short": _handle_string_too_short,
     "string_too_long": _handle_string_too_long,
+    "external_service_error": _handle_external_service_error,
 }
 
 

@@ -64,7 +64,7 @@ class Messages:
                 "Total target allocations cannot exceed 100% in an account"
             )
             AT_LEAST_ONE_GREATER_THAN_ZERO = "You need to specify a target allocation greater than 0 for at least one security"
-            ALLOCATION_STRATEGY_REQUIRED = "The total allocation target must sum to 1 (100%) or an allocation strategy must be specified"
+            ALLOCATION_STRATEGY_REQUIRED = "The total allocation target for all securities must sum to 100%, or an allocation strategy must be specified"
 
     class Transaction:
         PROCESSED = "Transaction processed successfully"

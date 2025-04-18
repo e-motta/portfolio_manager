@@ -169,7 +169,6 @@ class SecurityAddForm(DataForm):
                 help="Set the target allocation percentage for this security",
             )
 
-            print(target_allocation)
             # Store values in session state
             st.session_state["new_security_symbol"] = symbol
             st.session_state["new_security_name"] = name
