@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, status
 
 from app import crud
@@ -92,5 +91,7 @@ def create_allocation_plan(
 ) -> ResponseMultiple[AllocationPlanItem]:
     verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
     mgr = AccountManager(session, account_db, fetch_prices)
-    plan = mgr.get_allocation_plan(allocation_plan_in.new_investment)
+    plan = mgr.get_allocation_plan(
+        allocation_plan_in.new_investment, allocation_plan_in.allocation_strategy
+    )
     return ResponseMultiple(data=plan, message=Messages.Allocation.CREATED)
