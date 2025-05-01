@@ -1,4 +1,3 @@
-from typing import Any
 
 from repositories.trades import TradesRepository
 from results import ResultMultiple, ResultSingle
@@ -44,7 +43,7 @@ class TradesService:
             {
                 "Date": trade["created_at"].split("T")[0],  # Format date
                 "Type": trade["type"].upper(),
-                "Security ID": trade["security_id"],
+                "Security": trade["security_symbol"],
                 "Quantity": format_number(trade["quantity"]),
                 "Price": format_currency(trade["price"]),
                 "Total": format_currency(

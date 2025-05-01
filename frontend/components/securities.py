@@ -27,6 +27,7 @@ class SecuritiesTable(SelectableDataTable):
                 help="Select to Edit or Delete",
             ),
             "Symbol": st.column_config.TextColumn("Symbol", disabled=True),
+            "Name": st.column_config.TextColumn(disabled=True),
             "Target Allocation": st.column_config.Column("Target %", disabled=True),
             "Cost Basis": st.column_config.Column("Cost Basis", disabled=True),
             "Position": st.column_config.Column("Position", disabled=True),
@@ -58,7 +59,6 @@ class SecurityEditForm(DataForm):
         """
         super().__init__(
             form_id=f"edit_security_{security_id}",
-            title="Edit Security",
             clear_on_submit=False,
         )
         self.security_id = security_id
@@ -136,7 +136,7 @@ class SecurityAddForm(DataForm):
 
     def render_with_handler(
         self,
-        on_add: Callable[[str, str, float], None],
+        on_add: Callable[[str, float], None],
     ) -> None:
         """
         Render the add form with the provided handler.
@@ -156,34 +156,27 @@ class SecurityAddForm(DataForm):
                 ).upper()
 
             with col2:
-                name = st.text_input(
-                    "Name",
-                    help="Enter the full name of the security",
+                target_allocation = st.number_input(
+                    "Target Allocation (%)",
+                    value=None,
+                    step=0.1,
+                    format="%.1f",
+                    help="Set the target allocation percentage for this security",
                 )
-
-            target_allocation = st.number_input(
-                "Target Allocation (%)",
-                value=None,
-                step=0.1,
-                format="%.1f",
-                help="Set the target allocation percentage for this security",
-            )
 
             # Store values in session state
             st.session_state["new_security_symbol"] = symbol
-            st.session_state["new_security_name"] = name
             st.session_state["new_security_allocation"] = target_allocation
 
         def handle_submit():
             symbol = st.session_state.get("new_security_symbol", "")
-            name = st.session_state.get("new_security_name", "")
             allocation = st.session_state.get("new_security_allocation", 0.0)
 
-            if not symbol or not name:
-                st.error("Symbol and Name are required")
+            if not symbol:
+                st.error("Symbol is required")
                 st.stop()
 
-            on_add(symbol, name, allocation)
+            on_add(symbol, allocation)
 
         self.render(
             render_fields=render_fields,

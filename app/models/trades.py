@@ -39,6 +39,7 @@ class TradeRead(TradeBase):
     updated_at: datetime
     deleted_at: datetime | None
     account_id: UUID
+    security_symbol: str | None = None
 
 
 class TradeUpdate(SQLModel):

@@ -18,7 +18,6 @@ class AccountEditForm(DataForm):
         """
         super().__init__(
             form_id=f"edit_account_{account_id}",
-            title="Edit Account",
             clear_on_submit=False,
         )
         self.account_id = account_id

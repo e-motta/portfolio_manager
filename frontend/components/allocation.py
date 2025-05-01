@@ -1,6 +1,6 @@
 from typing import Callable
-import pandas as pd
 
+import pandas as pd
 import streamlit as st
 from components.data_table import DataForm
 

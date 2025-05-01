@@ -16,30 +16,13 @@ from app.tests.utils import (
 )
 
 
-@pytest.fixture()
-def fetch_prices_mock():
-    def fixture(symbols: list[str]) -> dict[str, Decimal]:
-        securities = {
-            "ONE": Decimal("500"),
-            "TWO": Decimal("500"),
-        }
-        diff = set(symbols).difference(set(securities.keys()))
-        if diff:
-            raise ValueError(f"Could not fetch price for securities: {diff}")
-        return securities
-
-    return fixture
-
-
 def test_validate_target_allocation(session: Session):
     user = create_user(session)
     account = create_account(session, current_user=user)
     create_security(
         session, account=account, symbol="ONE", target_allocation=Decimal("0.9")
     )
-    new_sec_in = SecurityCreate(
-        name="Two", symbol="TWO", target_allocation=Decimal("0.1")
-    )
+    new_sec_in = SecurityCreate(symbol="TWO", target_allocation=Decimal("0.1"))
     validate_target_allocation(account, new_sec_in.target_allocation)
 
 
@@ -49,16 +32,14 @@ def test_validate_max_target_allocation_raises(session: Session):
     create_security(
         session, account=account, symbol="ONE", target_allocation=Decimal("1")
     )
-    new_sec_in = SecurityCreate(
-        name="Two", symbol="TWO", target_allocation=Decimal("0.1")
-    )
+    new_sec_in = SecurityCreate(symbol="TWO", target_allocation=Decimal("0.1"))
 
     with pytest.raises(HTTPException):
         validate_target_allocation(account, new_sec_in.target_allocation)
 
 
 def test_portfolio_get_allocation_plan_negative_needed_investment_becomes_zero(
-    session, fetch_prices_mock
+    session, mock_get_tickers_data
 ):
     user = create_user(session)
     account = create_account(session, current_user=user)
@@ -90,7 +71,7 @@ def test_portfolio_get_allocation_plan_negative_needed_investment_becomes_zero(
         price=Decimal("500"),
     )
 
-    portfolio = AccountManager(session, account, fetch_prices_mock)
+    portfolio = AccountManager(session, account)
 
     new_investment_amount = Decimal("1000")
     plan = portfolio.get_allocation_plan(new_investment_amount)
@@ -119,7 +100,7 @@ def test_portfolio_get_allocation_plan_negative_needed_investment_becomes_zero(
     assert plan == expected_plan
 
 
-def test_portfolio_get_allocation_plan(session, fetch_prices_mock):
+def test_portfolio_get_allocation_plan(session, mock_get_tickers_data):
     user = create_user(session)
     account = create_account(session, current_user=user)
     create_and_process_ledger(session, account=account, amount=Decimal("2000"))
@@ -150,7 +131,7 @@ def test_portfolio_get_allocation_plan(session, fetch_prices_mock):
         price=Decimal("500"),
     )
 
-    portfolio = AccountManager(session, account, fetch_prices_mock)
+    portfolio = AccountManager(session, account)
 
     new_investment_amount = Decimal("3000")
     plan = portfolio.get_allocation_plan(new_investment_amount)
@@ -180,7 +161,7 @@ def test_portfolio_get_allocation_plan(session, fetch_prices_mock):
 
 
 def test_portfolio_get_allocation_plan_partial_allocation_scale(
-    session, fetch_prices_mock
+    session, mock_get_tickers_data
 ):
     user = create_user(session)
     account = create_account(session, current_user=user)
@@ -212,7 +193,7 @@ def test_portfolio_get_allocation_plan_partial_allocation_scale(
         price=Decimal("500"),
     )
 
-    portfolio = AccountManager(session, account, fetch_prices_mock)
+    portfolio = AccountManager(session, account)
 
     new_investment_amount = Decimal("3000")
     plan = portfolio.get_allocation_plan(
@@ -244,7 +225,7 @@ def test_portfolio_get_allocation_plan_partial_allocation_scale(
 
 
 def test_portfolio_get_allocation_plan_partial_allocation_fixed(
-    session, fetch_prices_mock
+    session, mock_get_tickers_data
 ):
     user = create_user(session)
     account = create_account(session, current_user=user)
@@ -276,7 +257,7 @@ def test_portfolio_get_allocation_plan_partial_allocation_fixed(
         price=Decimal("500"),
     )
 
-    mgr = AccountManager(session, account, fetch_prices_mock)
+    mgr = AccountManager(session, account)
 
     new_investment_amount = Decimal("3000")
     plan = mgr.get_allocation_plan(new_investment_amount, AllocationStrategy.FIXED)
@@ -306,7 +287,7 @@ def test_portfolio_get_allocation_plan_partial_allocation_fixed(
 
 
 def test_portfolio_get_allocation_plan_partial_allocation_no_strategy(
-    session, fetch_prices_mock
+    session, mock_get_tickers_data
 ):
     user = create_user(session)
     account = create_account(session, current_user=user)
@@ -332,14 +313,14 @@ def test_portfolio_get_allocation_plan_partial_allocation_no_strategy(
         price=Decimal("500"),
     )
 
-    mgr = AccountManager(session, account, fetch_prices_mock)
+    mgr = AccountManager(session, account)
     new_investment_amount = Decimal("3000")
 
     with pytest.raises(HTTPException):
         mgr.get_allocation_plan(new_investment_amount)
 
 
-def test_portfolio_get_allocation_plan_zero_allocation(session, fetch_prices_mock):
+def test_portfolio_get_allocation_plan_zero_allocation(session, mock_get_tickers_data):
     user = create_user(session)
     account = create_account(session, current_user=user)
     create_and_process_ledger(session, account=account, amount=Decimal("2000"))
@@ -364,7 +345,7 @@ def test_portfolio_get_allocation_plan_zero_allocation(session, fetch_prices_moc
         price=Decimal("500"),
     )
 
-    portfolio = AccountManager(session, account, fetch_prices_mock)
+    portfolio = AccountManager(session, account)
     new_investment_amount = Decimal("3000")
 
     with pytest.raises(HTTPException):

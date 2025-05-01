@@ -1,4 +1,3 @@
-from decimal import Decimal
 
 from repositories.allocation import AllocationRepository
 from results import ResultMultiple

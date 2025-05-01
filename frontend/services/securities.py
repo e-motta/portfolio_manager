@@ -1,4 +1,3 @@
-from typing import Any
 
 from repositories.securities import SecuritiesRepository
 from results import ResultMultiple, ResultSingle
@@ -16,12 +15,11 @@ class SecuritiesService:
         return ResultMultiple(data=data, message=response["message"])
 
     def create_security(
-        self, account_id: str, symbol: str, name: str, target_allocation: float
+        self, account_id: str, symbol: str, target_allocation: float
     ) -> ResultSingle:
         """Create a new security for an account."""
         security_data = {
             "symbol": symbol,
-            "name": name,
             "target_allocation": round(target_allocation / 100, 8),
         }
         result = self.repository.create_security(account_id, security_data)
@@ -45,6 +43,7 @@ class SecuritiesService:
         return [
             {
                 "Symbol": security["symbol"],
+                "Name": security["name"],
                 "Target Allocation": format_percentage(security["target_allocation"]),
                 "Cost Basis": format_currency(security["cost_basis"]),
                 "Position": format_number(security["position"]),
