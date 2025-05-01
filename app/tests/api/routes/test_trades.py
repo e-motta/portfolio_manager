@@ -4,7 +4,6 @@ import pytest
 from fastapi import Response, status
 from fastapi.testclient import TestClient
 from sqlmodel import Session
-from starlette import status
 
 from app.core.config import settings
 from app.models.ledger import LedgerType

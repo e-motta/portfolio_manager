@@ -1,18 +1,18 @@
-from decimal import Decimal
-from dataclasses import dataclass
-from typing import Literal
 from collections.abc import Iterable
+from dataclasses import dataclass
+from decimal import Decimal
+from typing import Literal
 
 from fastapi import HTTPException, status
 from sqlmodel import Session
 
-from app.integrations import get_tickers_data
-from app.models.accounts import Account
-from app.models.securities import Security, SecurityCreate
+from app import crud
 from app.constants.messages import Messages
 from app.core.logging_config import logger
+from app.integrations import get_tickers_data
+from app.models.accounts import Account
 from app.models.generic import DetailItem
-from app import crud
+from app.models.securities import Security, SecurityCreate
 
 
 @dataclass
@@ -64,7 +64,7 @@ def fetch_tickers_info(symbols: str | list[str]) -> dict[str, TickerInfo]:
             out[symbol] = ticker_info
 
         return out
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=DetailItem(

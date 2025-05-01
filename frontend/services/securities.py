@@ -1,4 +1,3 @@
-from typing import Any
 
 from repositories.securities import SecuritiesRepository
 from results import ResultMultiple, ResultSingle

@@ -14,7 +14,7 @@ from app.models.accounts import Account
 from app.models.generic import Meta, ResponseMultiple, ResponseSingle
 from app.models.securities import Security, SecurityCreate, SecurityRead, SecurityUpdate
 from app.services.allocation import validate_target_allocation
-from app.services.securities import update_securities_info, create_security_with_info
+from app.services.securities import create_security_with_info
 
 router = APIRouter(
     prefix=f"/{settings.ACCOUNTS_ROUTE_STR}/{{account_id}}/{settings.SECURITIES_ROUTE_STR}",

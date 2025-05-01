@@ -1,9 +1,9 @@
 import streamlit as st
+from components.allocation import AllocationPlanForm, AllocationPlanTable
 from components.base_view import BaseView
 from services.accounts import AccountsService
 from services.allocation import AllocationService
-from utils import handle_error, require_auth
-from components.allocation import AllocationPlanForm, AllocationPlanTable
+from utils import handle_error
 
 
 class AllocationView(BaseView[AllocationService]):

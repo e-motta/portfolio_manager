@@ -1,5 +1,4 @@
 from decimal import Decimal
-from typing import Callable
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -9,8 +8,8 @@ from app.constants.messages import Messages
 from app.core.logging_config import logger
 from app.models.accounts import Account, AllocationPlanItem, AllocationStrategy
 from app.models.generic import DetailItem
+from app.services.securities import fetch_tickers_info, update_securities_info
 from app.utils import round_decimal
-from app.services.securities import update_securities_info, fetch_tickers_info
 
 
 def validate_target_allocation(

@@ -1,4 +1,3 @@
-from typing import Any
 
 from repositories.trades import TradesRepository
 from results import ResultMultiple, ResultSingle
