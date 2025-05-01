@@ -1,4 +1,5 @@
 from decimal import Decimal
+from uuid import UUID
 
 from sqlmodel import Session, col, func, select
 
@@ -9,6 +10,10 @@ from app.models.securities import (
     SecurityServiceUpdate,
     SecurityUpdate,
 )
+
+
+def get_one(session: Session, id: str | UUID):
+    return session.get(Security, id)
 
 
 def get_total_target_allocation(session: Session, account: Account):

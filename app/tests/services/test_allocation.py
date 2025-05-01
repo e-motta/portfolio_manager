@@ -16,21 +16,6 @@ from app.tests.utils import (
 )
 
 
-@pytest.fixture()
-def fetch_prices_mock():
-    def fixture(symbols: list[str]) -> dict[str, Decimal]:
-        securities = {
-            "ONE": Decimal("500"),
-            "TWO": Decimal("500"),
-        }
-        diff = set(symbols).difference(set(securities.keys()))
-        if diff:
-            raise ValueError(f"Could not fetch price for securities: {diff}")
-        return securities
-
-    return fixture
-
-
 def test_validate_target_allocation(session: Session):
     user = create_user(session)
     account = create_account(session, current_user=user)

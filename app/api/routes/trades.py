@@ -28,13 +28,19 @@ router = APIRouter(
 
 @router.get("/", response_model=ResponseMultiple[TradeRead])
 def read_trade_list(
+    session: SessionDepAnnotated,
     current_user: CurrentUserDepAnnotated,
     account_db: Account = Depends(get_account_or_404),
 ):
     verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
-    return ResponseMultiple(
-        data=account_db.trades, meta=Meta(count=len(account_db.trades))
-    )
+    trades = []
+    for t in account_db.trades:
+        t = TradeRead.model_validate(t)
+        sec = crud.securities.get_one(session, t.security_id)
+        t.security_symbol = sec.symbol if sec else ""
+        trades.append(t)
+
+    return ResponseMultiple(data=trades, meta=Meta(count=len(account_db.trades)))
 
 
 @router.get("/{trade_id}", response_model=ResponseSingle[TradeRead])
