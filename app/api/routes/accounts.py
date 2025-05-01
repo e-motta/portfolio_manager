@@ -18,7 +18,7 @@ from app.models.accounts import (
     AllocationPlanItem,
 )
 from app.models.generic import Meta, ResponseMultiple, ResponseSingle
-from app.services.allocation import AccountManager, fetch_prices
+from app.services.allocation import AccountManager
 
 router = APIRouter(
     prefix=f"/{settings.ACCOUNTS_ROUTE_STR}", tags=[settings.ACCOUNTS_ROUTE_STR]
@@ -90,7 +90,7 @@ def create_allocation_plan(
     account_db: Account = Depends(get_account_or_404),
 ) -> ResponseMultiple[AllocationPlanItem]:
     verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
-    mgr = AccountManager(session, account_db, fetch_prices)
+    mgr = AccountManager(session, account_db)
     plan = mgr.get_allocation_plan(
         allocation_plan_in.new_investment, allocation_plan_in.allocation_strategy
     )

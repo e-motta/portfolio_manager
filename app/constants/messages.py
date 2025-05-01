@@ -1,89 +1,94 @@
 class Messages:
     class User:
-        CREATED = "User created successfully"
-        NOT_CREATED = "User could not be created"
-        NOT_FOUND = "User not found"
-        UPDATED = "User updated successfully"
-        DELETED = "User deleted successfully"
-        USERNAME_IN_USE = "Username already in use"
-        EMAIL_IN_USE = "Email already in use"
-        REGISTRATION_SUCCESSFUL = "Registration successful! Please log in."
-        ALREADY_ACTIVE = "User is already active"
-        RECOVERED = "User recovered successfully"
+        CREATED = "Account created successfully."
+        NOT_CREATED = "The account could not be created. Please try again."
+        NOT_FOUND = "User not found."
+        UPDATED = "User information updated successfully."
+        DELETED = "Account deleted successfully."
+        USERNAME_IN_USE = "This username is already in use."
+        EMAIL_IN_USE = "This email is already in use."
+        REGISTRATION_SUCCESSFUL = "Registration completed. Please log in to continue."
+        ALREADY_ACTIVE = "The account is already active."
+        RECOVERED = "User account recovered successfully."
 
     class Auth:
-        INVALID_CREDENTIALS = "Invalid username or password"
-        FORBIDDEN = "You do not permission to perform this action"
+        INVALID_CREDENTIALS = "Incorrect username or password."
+        FORBIDDEN = "Permission denied for this action."
 
     class Password:
-        INVALID = "Password is invalid"
+        INVALID = "The password does not meet the required criteria."
 
         class Validation:
-            LENGTH = "Password must be at least 8 characters long"
-            DIGIT = "Password must contain at least one digit"
-            UPPERCASE = "Password must contain at least one uppercase letter"
-            LOWERCASE = "Password must contain at least one lowercase letter"
-            SPECIAL_CHARACTER = "Password must contain at least one special character"
+            LENGTH = "Password must contain at least 8 characters."
+            DIGIT = "Password must include at least one digit."
+            UPPERCASE = "Password must include at least one uppercase letter."
+            LOWERCASE = "Password must include at least one lowercase letter."
+            SPECIAL_CHARACTER = "Password must include at least one special character."
 
     class General:
-        INTERNAL_ERROR = "An unexpected error occurred"
+        INTERNAL_ERROR = "An unexpected error occurred. Please try again later."
 
     class Account:
-        CREATED = "Account created successfully"
-        UPDATED = "Account updated successfully"
-        DELETED = "Account deleted successfully"
-        NOT_FOUND = "Account not found"
+        CREATED = "Account created successfully."
+        UPDATED = "Account updated successfully."
+        DELETED = "Account deleted successfully."
+        NOT_FOUND = "Account not found."
 
     class Security:
-        CREATED = "Security created successfully"
-        UPDATED = "Security udpated successfully"
-        DELETED = "Security deleted successfully"
-        FETCHING = "Fetching securities data..."
-        NOT_FOUND = "Security not found"
+        CREATED = "Security added successfully."
+        UPDATED = "Security updated successfully."
+        DELETED = "Security removed successfully."
+        FETCHING = "Retrieving securities data..."
+        NOT_FOUND = "Security not found."
+
+    class External:
+        COULD_NOT_FETCH = "Unable to retrieve data from external provider."
 
         @staticmethod
-        def could_not_fetch_symbol(symbol: str):
-            return f"Could not fetch data for {symbol}"
+        def could_not_fetch_symbols(symbols: str | list):
+            if isinstance(symbols, str):
+                return f"Unable to retrieve data for ticker '{symbols}'."
+            return f"Unable to retrieve data for tickers '{"', '".join(symbols)}'."
 
     class Trade:
-        CREATED = "Trade created successfully"
-        DELETED = "Trade deleted successfully"
-        NOT_FOUND = "Trade not found"
+        CREATED = "Trade executed successfully."
+        DELETED = "Trade removed successfully."
+        NOT_FOUND = "Trade not found."
 
     class Ledger:
-        CREATED = "Ledger entry created successfully"
-        DELETED = "Ledger entry deleted successfully"
-        NOT_FOUND = "Ledger entry not found"
+        CREATED = "Ledger entry created successfully."
+        DELETED = "Ledger entry removed successfully."
+        NOT_FOUND = "Ledger entry not found."
 
     class Allocation:
         CREATING = "Generating allocation plan..."
-        CREATED = "Allocation plan generated successfully"
+        CREATED = "Allocation plan generated successfully."
 
         class Validation:
-            MAX_TARGET_ALLOCATION = (
-                "Total target allocations cannot exceed 100% in an account"
+            MAX_TARGET_ALLOCATION = "The total target allocation must not exceed 100%."
+            AT_LEAST_ONE_GREATER_THAN_ZERO = (
+                "At least one security must have a target allocation greater than 0%."
             )
-            AT_LEAST_ONE_GREATER_THAN_ZERO = "You need to specify a target allocation greater than 0 for at least one security"
-            ALLOCATION_STRATEGY_REQUIRED = "The total allocation target for all securities must sum to 100%, or an allocation strategy must be specified"
+            ALLOCATION_STRATEGY_REQUIRED = "The total target allocation must equal 100%, or an allocation strategy must be selected."
 
     class Transaction:
-        PROCESSED = "Transaction processed successfully"
+        PROCESSED = "Transaction processed successfully."
         REPROCESSING_ALL = "Reprocessing all transactions..."
-        REPROCESSED_ALL = "All transactions reprocessed successfully"
+        REPROCESSED_ALL = "All transactions reprocessed successfully."
 
         @staticmethod
         def processing(type: str):
-            return f"Processing '{type}' transaction..."
+            return f"Processing {type} transaction..."
 
         class Validation:
             WITHDRAWN_AMOUNT_CANNOT_BE_GREATER_THAN_BUYING_POWER = (
-                "Withdrawn amount cannot be greater than account buying power"
+                "Withdrawn amount exceeds available buying power."
             )
 
             @staticmethod
             def value_cannot_be_greater_than_buying_power(type: str):
-                return f"Total value cannot be greater than account buying power for transaction of type '{type}'"
+                return f"Transaction value exceeds available buying power for type '{type}'."
 
             @staticmethod
             def quantity_cannot_be_greater_than_position(type: str):
-                return f"Quantity cannot be greater than current position for transaction of type '{type}'"
+                return f"Transaction quantity exceeds the current position for type '{type}'."

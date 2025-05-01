@@ -14,6 +14,7 @@ from app.models.accounts import Account
 from app.models.generic import Meta, ResponseMultiple, ResponseSingle
 from app.models.securities import Security, SecurityCreate, SecurityRead, SecurityUpdate
 from app.services.allocation import validate_target_allocation
+from app.services.securities import update_securities_info, create_security_with_info
 
 router = APIRouter(
     prefix=f"/{settings.ACCOUNTS_ROUTE_STR}/{{account_id}}/{settings.SECURITIES_ROUTE_STR}",
@@ -56,7 +57,7 @@ def create_security(
 ):
     verify_ownership_or_403(account_db.user_id, current_user.id, current_user.is_admin)
     validate_target_allocation(account_db, security_in.target_allocation)
-    security_db = crud.securities.create(session, security_in, account_db)
+    security_db = create_security_with_info(session, security_in, account_db)
     return ResponseSingle(data=security_db, message=Messages.Security.CREATED)
 
 

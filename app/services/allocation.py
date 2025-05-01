@@ -2,16 +2,15 @@ from decimal import Decimal
 from typing import Callable
 from uuid import UUID
 
-import yfinance as yf
 from fastapi import HTTPException, status
 from sqlmodel import Session
 
-from app import crud
 from app.constants.messages import Messages
 from app.core.logging_config import logger
 from app.models.accounts import Account, AllocationPlanItem, AllocationStrategy
 from app.models.generic import DetailItem
 from app.utils import round_decimal
+from app.services.securities import update_securities_info, fetch_tickers_info
 
 
 def validate_target_allocation(
@@ -32,60 +31,14 @@ def validate_target_allocation(
         )
 
 
-def fetch_prices(symbols: list[str]) -> dict[str, Decimal]:
-    logger.info(Messages.Security.FETCHING)
-    tickers = yf.Tickers(" ".join(symbols))
-    bid_prices = {}
-
-    for symbol in symbols:
-        ticker = tickers.tickers.get(symbol)
-        if not ticker:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=DetailItem(
-                    type="external_service_error",
-                    loc=[],
-                    msg=Messages.Security.could_not_fetch_symbol(symbol),
-                ).model_dump(),
-            )
-
-        info = ticker.info
-        if "bid" in info and info["bid"] is not None:
-            bid_prices[symbol] = Decimal(str(info["bid"]))
-        else:
-            data = ticker.history(period="1d")
-            if not data.empty:
-                bid_prices[symbol] = Decimal(str(data["Close"].iloc[-1]))
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail=DetailItem(
-                        type="external_service_error",
-                        loc=[],
-                        msg=Messages.Security.could_not_fetch_symbol(symbol),
-                    ).model_dump(),
-                )
-
-    return bid_prices
-
-
 class AccountManager:
     def __init__(
         self,
         session: Session,
         account: Account,
-        fetch_prices: Callable[[list[str]], dict[str, Decimal]],
     ):
         self.session = session
         self.account = account
-        self.fetch_prices = fetch_prices
-
-    def update_security_prices(self) -> None:
-        securities = self.account.securities
-        updated_prices = self.fetch_prices([sec.symbol for sec in securities])
-        for sec in securities:
-            sec.latest_price = updated_prices[sec.symbol]
-            crud.securities.update(self.session, sec)
 
     def get_total_value(self) -> Decimal:
         s = sum([s.latest_price * s.position for s in self.account.securities])
@@ -101,7 +54,10 @@ class AccountManager:
         allocation_strategy: AllocationStrategy | None = None,
     ):
         logger.info(Messages.Allocation.CREATING)
-        self.update_security_prices()
+        tickers_info = fetch_tickers_info([s.symbol for s in self.account.securities])
+        update_securities_info(
+            self.session, self.account.securities, tickers_info, fields=["latest_price"]
+        )
         current_total_value = self.get_total_value()
         new_total = current_total_value + new_investment_amount
         total_target_allocation = self.get_total_allocation()

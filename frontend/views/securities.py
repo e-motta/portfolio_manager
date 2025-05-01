@@ -107,11 +107,9 @@ class SecuritiesView(BaseView[SecuritiesService]):
         add_form = SecurityAddForm()
 
         # Define the callback for adding a security
-        def on_add(symbol: str, name: str, allocation: float) -> None:
+        def on_add(symbol: str, allocation: float) -> None:
             try:
-                response = self.service.create_security(
-                    account_id, symbol, name, allocation
-                )
+                response = self.service.create_security(account_id, symbol, allocation)
                 if response.message:
                     self.render_success(response.message)
                 st.rerun()

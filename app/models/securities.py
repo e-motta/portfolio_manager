@@ -10,7 +10,6 @@ from app.models.trades import Trade
 
 
 class SecurityBase(SQLModel):
-    name: str
     symbol: str
     target_allocation: Decimal = get_decimal_field(le=1)
 
@@ -18,6 +17,7 @@ class SecurityBase(SQLModel):
 class Security(BaseTableModel, SecurityBase, table=True):
     __tablename__: str = "securities"
 
+    name: str = ""
     cost_basis: Decimal = get_decimal_field(default=0)
     position: Decimal = get_decimal_field(default=0)
     average_price: Decimal = get_decimal_field(default=0)
@@ -35,6 +35,7 @@ class SecurityCreate(SecurityBase):
 
 
 class SecurityRead(SecurityBase):
+    name: str
     cost_basis: Decimal
     position: Decimal
     average_price: Decimal
@@ -47,13 +48,12 @@ class SecurityRead(SecurityBase):
 
 
 class SecurityUpdate(SQLModel):
-    symbol: str | None = None
-    name: str | None = None
     target_allocation: Decimal | None = get_decimal_field(le=1, default=None)
 
 
 class SecurityServiceUpdate(SQLModel):
-    cost_basis: Decimal = get_decimal_field()
-    position: Decimal = get_decimal_field()
-    average_price: Decimal = get_decimal_field()
-    latest_price: Decimal = get_decimal_field()
+    name: str | None = None
+    cost_basis: Decimal = get_decimal_field(default=None)
+    position: Decimal = get_decimal_field(default=None)
+    average_price: Decimal = get_decimal_field(default=None)
+    latest_price: Decimal = get_decimal_field(default=None)

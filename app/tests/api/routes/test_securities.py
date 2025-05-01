@@ -133,7 +133,11 @@ def test_get_security_detail(
 
 
 def test_create_security(
-    client: TestClient, session: Session, test_username: str, test_password: str
+    client: TestClient,
+    session: Session,
+    test_username: str,
+    test_password: str,
+    mock_get_tickers_data,
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
@@ -205,7 +209,11 @@ def test_create_security_excessive_target_allocation(
 
 
 def test_update_security(
-    client: TestClient, session: Session, test_username: str, test_password: str
+    client: TestClient,
+    session: Session,
+    test_username: str,
+    test_password: str,
+    monkeypatch,
 ):
     user = create_user(session, username=test_username, password=test_password)
     account = create_account(session, current_user=user)
@@ -215,7 +223,7 @@ def test_update_security(
     )
 
     body = {
-        "name": "updated_name",
+        "target_allocation": "0.1",
     }
 
     r = client.patch(
@@ -225,7 +233,7 @@ def test_update_security(
     )
     assert r.status_code == status.HTTP_200_OK
     data = r.json()["data"]
-    assert data["name"] == "updated_name"
+    assert Decimal(data["target_allocation"]) == Decimal("0.1")
 
 
 def test_update_security_negative_target_allocation(

@@ -84,3 +84,34 @@ def test_username():
 @pytest.fixture(scope="function")
 def test_password():
     return generate_random_password()
+
+
+@pytest.fixture()
+def mock_get_tickers_data(monkeypatch):
+    def fixture(symbols: str | list[str]):
+        data = {
+            "NEW": {
+                "longName": "New Name",
+                "bid": 1,
+                "previousClose": 1.1,
+                "category": "ETF",
+                "typeDisp": "ETF",
+            },
+            "ONE": {
+                "longName": "One",
+                "bid": 500,
+                "previousClose": 500,
+                "category": "ETF",
+                "typeDisp": "ETF",
+            },
+            "TWO": {
+                "longName": "Two",
+                "bid": 500,
+                "previousClose": 500,
+                "category": "ETF",
+                "typeDisp": "ETF",
+            },
+        }
+        return data
+
+    monkeypatch.setattr("app.services.securities.get_tickers_data", fixture)
